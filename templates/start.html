@@ -1,57 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Start</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
-    <div class="d-flex">
-        <div class="bg-info text-white p-5 w-64 min-vh-100">
-            <!-- Greeting Section -->
-            <div class="mb-6 text-center bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 p-6 rounded-lg shadow-lg">
-                <h4 class="text-3xl font-semibold text-white mb-2">Xin chào</h4>
-                <p class="text-lg text-white opacity-80">Chào mừng bạn đến với hệ thống</p>
-            </div>
-            
-            <!-- Navigation Menu -->
-            <ul class="list-unstyled">
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-clock-fill mr-2"></i>Điểm danh đầu giờ
-                    </a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-clock-history mr-2"></i>Điểm danh cuối giờ
-                    </a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-file-earmark-text-fill mr-2"></i>Xem thông tin điểm danh
-                    </a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-house-door-fill mr-2"></i>Xem thông tin cá nhân
-                    </a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-house-door-fill mr-2"></i>Trang quản lý
-                    </a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-house-door-fill mr-2"></i>Đăng xuất
-                    </a>
-                </li>
-            </ul>
-        </div>
-        
+{% extends 'layout.html' %}
+
+{% block title %}Danh Sách Điểm Danh{% endblock %}
+
+{% block content %}
         <!-- Main Content -->
         <div class="flex-1">
             <!-- Main Content Area --> 
@@ -98,160 +49,158 @@
     <button id="refreshButton" class="btn btn-danger position-fixed bottom-8 right-8" style="z-index: 1000;">
         click reload lại trang khi muốn thay đổi chụp hoặc quay
     </button>
-    </div>
-
+    
     <script>
-let videoStream;
-let countdownTimer;
-const videoElement = document.getElementById('video');
-const canvasElement = document.getElementById('canvas');
-const startCameraButton = document.getElementById('startCamera');
-const capturePhotoButton = document.getElementById('capturePhoto');
-const recordVideoButton = document.getElementById('recordVideo');
-const downloadLink = document.getElementById('downloadLink');
-const countdownElement = document.getElementById('countdown');
-const saveLink = document.getElementById('saveLink');
-const attendanceLink = document.getElementById('attendanceLink');
-
-// Open the camera and display it on the video element
-startCameraButton.addEventListener('click', async () => {
-    try {
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        videoElement.srcObject = videoStream;
-        videoElement.onloadedmetadata = () => {
-            // This ensures that the video metadata is loaded before you try to access its dimensions
-            capturePhotoButton.classList.remove('d-none');
-            recordVideoButton.classList.remove('d-none');
-            startCameraButton.classList.add('d-none');
-        };
-    } catch (err) {
-        console.error('Error accessing camera:', err);
-    }
-});
-
-// Capture a photo
-capturePhotoButton.addEventListener('click', () => {
-    const context = canvasElement.getContext('2d');
-    canvasElement.width = videoElement.videoWidth;
-    canvasElement.height = videoElement.videoHeight;
-    context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-    const photoData = canvasElement.toDataURL('image/jpeg');
-
-    // Download the captured photo
-    downloadLink.href = photoData;
-    downloadLink.classList.remove('d-none');
-    downloadLink.textContent = 'Download Photo';
-
-    // Show the "Lưu Video" button
-    saveLink.classList.remove('d-none');
-});
-
-// Record a video for 5 seconds with countdown
-recordVideoButton.addEventListener('click', () => {
-    let countdown = 4;  // 5 seconds countdown
-    countdownElement.textContent = `Recording in: ${countdown}s`;
-    countdownTimer = setInterval(() => {
-        countdown -= 1;
-        countdownElement.textContent = `Recording in: ${countdown}s`;
-        if (countdown === 0) {
-            clearInterval(countdownTimer);
-            startRecording();
+        let videoStream;
+        let countdownTimer;
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('canvas');
+        const startCameraButton = document.getElementById('startCamera');
+        const capturePhotoButton = document.getElementById('capturePhoto');
+        const recordVideoButton = document.getElementById('recordVideo');
+        const downloadLink = document.getElementById('downloadLink');
+        const countdownElement = document.getElementById('countdown');
+        const saveLink = document.getElementById('saveLink');
+        const attendanceLink = document.getElementById('attendanceLink');
+        
+        // Open the camera and display it on the video element
+        startCameraButton.addEventListener('click', async () => {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = videoStream;
+                videoElement.onloadedmetadata = () => {
+                    // This ensures that the video metadata is loaded before you try to access its dimensions
+                    capturePhotoButton.classList.remove('d-none');
+                    recordVideoButton.classList.remove('d-none');
+                    startCameraButton.classList.add('d-none');
+                };
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+            }
+        });
+        
+        // Capture a photo
+        capturePhotoButton.addEventListener('click', () => {
+            const context = canvasElement.getContext('2d');
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+            context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+            const photoData = canvasElement.toDataURL('image/jpeg');
+        
+            // Download the captured photo
+            downloadLink.href = photoData;
+            downloadLink.classList.remove('d-none');
+            downloadLink.textContent = 'Download Photo';
+        
+            // Show the "Lưu Video" button
+            saveLink.classList.remove('d-none');
+        });
+        
+        // Record a video for 5 seconds with countdown
+        recordVideoButton.addEventListener('click', () => {
+            let countdown = 4;  // 5 seconds countdown
+            countdownElement.textContent = `Recording in: ${countdown}s`;
+            countdownTimer = setInterval(() => {
+                countdown -= 1;
+                countdownElement.textContent = `Recording in: ${countdown}s`;
+                if (countdown === 0) {
+                    clearInterval(countdownTimer);
+                    startRecording();
+                }
+            }, 1000); // Countdown every 1 second
+        });
+        
+        function startRecording() {
+            const mediaRecorder = new MediaRecorder(videoStream);
+            const recordedChunks = [];
+        
+            mediaRecorder.ondataavailable = (event) => {
+                recordedChunks.push(event.data);
+            };
+        
+            mediaRecorder.onstop = () => {
+                const videoBlob = new Blob(recordedChunks, { type: 'video/mp4' }); // Save as MP4
+                const videoUrl = URL.createObjectURL(videoBlob);
+        
+                // Download the recorded video
+                downloadLink.href = videoUrl;
+                downloadLink.classList.remove('d-none');
+                downloadLink.textContent = 'Download Video';
+        
+                // Show the "Lưu Video" button
+                saveLink.classList.remove('d-none');
+            };
+        
+            mediaRecorder.start();
+            setTimeout(() => {
+                mediaRecorder.stop();
+            }, 4000); // Stop recording after 5 seconds
         }
-    }, 1000); // Countdown every 1 second
-});
-
-function startRecording() {
-    const mediaRecorder = new MediaRecorder(videoStream);
-    const recordedChunks = [];
-
-    mediaRecorder.ondataavailable = (event) => {
-        recordedChunks.push(event.data);
-    };
-
-    mediaRecorder.onstop = () => {
-        const videoBlob = new Blob(recordedChunks, { type: 'video/mp4' }); // Save as MP4
-        const videoUrl = URL.createObjectURL(videoBlob);
-
-        // Download the recorded video
-        downloadLink.href = videoUrl;
-        downloadLink.classList.remove('d-none');
-        downloadLink.textContent = 'Download Video';
-
-        // Show the "Lưu Video" button
-        saveLink.classList.remove('d-none');
-    };
-
-    mediaRecorder.start();
-    setTimeout(() => {
-        mediaRecorder.stop();
-    }, 4000); // Stop recording after 5 seconds
-}
-
-
-saveLink.addEventListener('click', () => {
-    saveLink.classList.add('d-none');
-    attendanceLink.classList.remove('d-none');
-
-    // Check if the data is an image or video and send it to the Flask backend
-    let fileData;
-    let fileBlob;
-    if (downloadLink.textContent === "Download Photo") {
-        const photoData = canvasElement.toDataURL('image/jpeg');
-        const byteString = atob(photoData.split(',')[1]); // Decode base64 data
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-        }
-        const blob = new Blob([ab], { type: 'image/jpeg' });
-
-        const formData = new FormData();
-        formData.append('file', blob, 'photo.jpg');
-        formData.append('fileType', 'image');
-
-        // Send the formData to Flask
-        fetch('/save-media-start', { method: 'POST', body: formData })
-            .then(response => response.json())
-            .then(data => {
-                console.log('File saved successfully:', data);
-            })
-            .catch(error => {
-                console.error('Error saving file:', error);
-            });
-
-    } else if (downloadLink.textContent === "Download Video") {
-        // Directly get the Blob URL and send it to Flask
-        fileBlob = downloadLink.href;
-        fetch(fileBlob)
-            .then(response => response.blob()) // Get the video blob
-            .then(blob => {
+        
+        
+        saveLink.addEventListener('click', () => {
+            saveLink.classList.add('d-none');
+            attendanceLink.classList.remove('d-none');
+        
+            // Check if the data is an image or video and send it to the Flask backend
+            let fileData;
+            let fileBlob;
+            if (downloadLink.textContent === "Download Photo") {
+                const photoData = canvasElement.toDataURL('image/jpeg');
+                const byteString = atob(photoData.split(',')[1]); // Decode base64 data
+                const ab = new ArrayBuffer(byteString.length);
+                const ia = new Uint8Array(ab);
+                for (let i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                const blob = new Blob([ab], { type: 'image/jpeg' });
+        
                 const formData = new FormData();
-                formData.append('file', blob, 'video.mp4'); // Set the correct file name for video
-                formData.append('fileType', 'video');
-
-                // Send the file data to the Flask API
-                fetch('/save-media-start', {
-                    method: 'POST',
-                    body: formData,
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('File saved successfully:', data);
-                })
-                .catch(error => {
-                    console.error('Error saving file:', error);
-                });
-            });
-    }
-});
-
-// Refresh the page
-document.getElementById('refreshButton').addEventListener('click', () => {
-    window.location.reload();
-});
-    </script>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-</body>
-</html>
+                formData.append('file', blob, 'photo.jpg');
+                formData.append('fileType', 'image');
+        
+                // Send the formData to Flask
+                fetch('/save-media-start', { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('File saved successfully:', data);
+                    })
+                    .catch(error => {
+                        console.error('Error saving file:', error);
+                    });
+        
+            } else if (downloadLink.textContent === "Download Video") {
+                // Directly get the Blob URL and send it to Flask
+                fileBlob = downloadLink.href;
+                fetch(fileBlob)
+                    .then(response => response.blob()) // Get the video blob
+                    .then(blob => {
+                        const formData = new FormData();
+                        formData.append('file', blob, 'video.mp4'); // Set the correct file name for video
+                        formData.append('fileType', 'video');
+        
+                        // Send the file data to the Flask API
+                        fetch('/save-media-start', {
+                            method: 'POST',
+                            body: formData,
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('File saved successfully:', data);
+                        })
+                        .catch(error => {
+                            console.error('Error saving file:', error);
+                        });
+                    });
+            }
+        });
+        
+        // Refresh the page
+        document.getElementById('refreshButton').addEventListener('click', () => {
+            window.location.reload();
+        });
+            </script>
+        
+            <!-- Bootstrap JS -->
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+{% endblock %}

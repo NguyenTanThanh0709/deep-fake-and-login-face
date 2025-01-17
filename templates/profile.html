@@ -1,119 +1,62 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Checker</title>
-</head>
-<body>
-    <h1>Upload Image for Attendance</h1>
-    <form action="/attendance" method="POST" enctype="multipart/form-data">
-        <input type="file" name="image" accept="image/*">
-        <button type="submit">Submit</button>
-    </form>
-</body>
-</html> -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Profile</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
-    <div class="d-flex">
-        <div class="bg-info text-white p-5 w-64 min-vh-100">
-            <!-- Greeting Section -->
-            <div class="mb-6 text-center bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 p-6 rounded-lg shadow-lg">
-                <h4 class="text-3xl font-semibold text-white mb-2">Xin chào</h4>
-                <p class="text-lg text-white opacity-80">Chào mừng bạn đến với hệ thống</p>
+{% extends 'layout.html' %}
+
+{% block title %}Danh Sách Điểm Danh{% endblock %}
+
+{% block content %}
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
             </div>
-            
-        
-            <!-- Navigation Menu -->
-            <ul class="list-unstyled">
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-clock-fill mr-2"></i>Điểm danh đầu giờ
-                    </a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-clock-history mr-2"></i>Điểm danh cuối giờ
-                    </a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-file-earmark-text-fill mr-2"></i>Xem thông tin điểm danh
-                    </a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-house-door-fill mr-2"></i>Xem thông tin cá nhân
-                    </a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-house-door-fill mr-2"></i>Trang quản lý
-                    </a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
-                        <i class="bi bi-house-door-fill mr-2"></i>Đăng xuất
-                    </a>
-                </li>
-            </ul>
-        </div>
-        
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Main Content -->
+    <div class="flex-1">
+        <!-- Main Content Area -->
+        <div class="container-fluid mx-auto" id="contprofile">
+            <!-- Profile Section -->
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6 bg-white p-5 rounded-lg shadow-lg">
+                    <!-- Profile Info -->
+                    <div class="text-center mb-5">
+                        <img src="{{ user.photo_reference }}" alt="Profile Photo" class="rounded-full w-32 h-32 mx-auto mb-4">
+                        <h3 class="text-2xl font-semibold">{{ user.name }}</h3>
+                        <p class="text-gray-500">Chức vụ: {{ user.vaiTro }}</p>
+                        <p class="text-gray-500">Email: {{ user.email }}</p>
+                        <p class="text-gray-500">Số điện thoại: {{ user.sdt }}</p>
+                        <p class="text-gray-500">Role: {{ user.role }}</p>
+                    </div>
 
-        <!-- Main Content -->
-        <div class="flex-1">
-
-
-            <!-- Main Content Area -->
-            <div class="container-fluid mx-auto" id="contprofile">
-                     <!-- Profile Section -->
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6 bg-white p-5 rounded-lg shadow-lg">
-                <!-- Profile Info -->
-                <div class="text-center mb-5">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/User_icon_2.svg/480px-User_icon_2.svg.png" alt="Profile Photo" class="rounded-full w-32 h-32 mx-auto mb-4">
-                    <h3 class="text-2xl font-semibold">John Doe</h3>
-                    <p class="text-gray-500">Chức vụ: Developer</p>
-                    <p class="text-gray-500">Email: john@example.com</p>
-                    <p class="text-gray-500">Số điện thoại: 123-456-7890</p>
-                    <p class="text-gray-500">Phòng Ban: ...</p>
+                    <!-- Change Password Section -->
+                    <div class="mt-5">
+                        <h4 class="text-xl font-semibold mb-3">Thay đổi mật khẩu</h4>
+                        <form action="{{ url_for('profile', user_id=user.maNhanVien) }}" method="POST">
+                            <div class="mb-4">
+                                <label for="currentPassword" class="block text-sm font-medium text-gray-700">Mật khẩu hiện tại</label>
+                                <input type="password" id="currentPassword" name="currentPassword" class="mt-2 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="newPassword" class="block text-sm font-medium text-gray-700">Mật khẩu mới</label>
+                                <input type="password" id="newPassword" name="newPassword" class="mt-2 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Xác nhận mật khẩu mới</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" class="mt-2 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Cập nhật mật khẩu</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-
-                <!-- Change Password Section -->
-                <div class="mt-5">
-                    <h4 class="text-xl font-semibold mb-3">Thay đổi mật khẩu</h4>
-                    <form action="#" method="POST">
-                        <div class="mb-4">
-                            <label for="currentPassword" class="block text-sm font-medium text-gray-700">Mật khẩu hiện tại</label>
-                            <input type="password" id="currentPassword" name="currentPassword" class="mt-2 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </div>
-                        <div class="mb-4">
-                            <label for="newPassword" class="block text-sm font-medium text-gray-700">Mật khẩu mới</label>
-                            <input type="password" id="newPassword" name="newPassword" class="mt-2 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </div>
-                        <div class="mb-4">
-                            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Xác nhận mật khẩu mới</label>
-                            <input type="password" id="confirmPassword" name="confirmPassword" class="mt-2 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </div>
-                        <div class="flex justify-end">
-                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Cập nhật mật khẩu</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
             </div>
         </div>
     </div>
-</body>
-</html>
-
+{% endblock %}

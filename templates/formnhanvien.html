@@ -1,135 +1,108 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>x
-    <title>Danh sách nhân viên</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
+{% extends 'layoutadmin.html' %}
 
-    <nav class="navbar navbar-expand-sm bg-info navbar-dark fixed-top">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="/">
-                    <img src="/static/images/key-person.png" alt="icon" style="height:35px;width:40px;">
-                    Face Recognition Based Attendance System
-                </a>
-            </div>
+{% block title %}Danh Sách Điểm Danh{% endblock %}
 
-            <ul class="nav navbar-nav navbar-right">
-                <li class="navbar-brand" id="nav-brand"><span>
-                    Made with <span style="color: #e25555;">&#9829;</span> by Amlan Mohanty </span>
-                </li>
-                <li class="navbar-brand"><span id='login_info'>
-                    </span>
-                </li>
-            </ul>
-        </div>
-</nav>
-    <div class='container-fluid mt-16' id="contformnv">
-        <h1 class="text-3xl font-semibold mb-4">Thêm/Chỉnh Sửa Nhân Viên</h1>
-    
-        <!-- Form for Add/Edit Employee -->
-        <form class="space-y-4 bg-white p-6 rounded-lg shadow-md">
-            <!-- Employee Name -->
-            <div class="form-group">
-                <label for="tenNhanVien" class="block text-gray-700 font-semibold">Tên Nhân Viên</label>
-                <input type="text" id="tenNhanVien" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập tên nhân viên" required>
-            </div>
-    
-            <!-- Email -->
-            <div class="form-group">
-                <label for="email" class="block text-gray-700 font-semibold">Email</label>
-                <input type="email" id="email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập email" required>
-            </div>
-    
-            <!-- Phone Number -->
-            <div class="form-group">
-                <label for="sdt" class="block text-gray-700 font-semibold">Số Điện Thoại</label>
-                <input type="text" id="sdt" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập số điện thoại">
-            </div>
+{% block content %}
+<div class='container-fluid mt-16 ' id="contformnv">
+    <br/>
+    <h1 ></h1>
+    <h1 class="text-3xl font-semibold mt-16">Thêm/Chỉnh Sửa Nhân Viên</h1>
 
-            <!-- Phone Number -->
-            <div class="form-group">
-                <label for="pass" class="block text-gray-700 font-semibold">Mật khẩu</label>
-                <input type="text" id="sdt" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập số mật khẩu">
-            </div>
-    
-            <!-- Role -->
-            <div class="form-group">
-                <label for="vaiTro" class="block text-gray-700 font-semibold">Vị Trí</label>
-                <input type="text" id="vaiTro" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập vị trí công việc">
-            </div>
-    
-            <!-- Department -->
-            <div class="form-group">
-                <label for="department" class="block text-gray-700 font-semibold">Phòng Ban</label>
-                <select id="department" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="accounting">Phòng Kế Toán</option>
-                    <option value="it">Phòng IT</option>
-                    <option value="hr">Phòng Nhân Sự</option>
-                    <option value="sales">Phòng Sale</option>
-                </select>
-            </div>
-    
-            <!-- Role -->
-            <div class="form-group">
-                <label for="role" class="block text-gray-700 font-semibold">Chức Vụ</label>
-                <input type="text" id="role" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập chức vụ của nhân viên (admin, user)">
-            </div>
-    
-            <!-- Status (Active/Inactive) -->
-            <div class="form-group">
-                <label for="isActive" class="block text-gray-700 font-semibold">Trạng Thái</label>
-                <select id="isActive" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="1">Đang làm</option>
-                    <option value="0">Đã nghỉ</option>
-                </select>
-            </div>
-    
-            <!-- Photo Reference -->
-            <div class="form-group">
-                <label for="photo_reference" class="block text-gray-700 font-semibold">Ảnh Nhân Viên</label>
-                <input type="file" id="photo_reference" class="w-full px-4 py-2 border rounded-lg">
-            </div>
+    <!-- Form for Add/Edit Employee -->
+    <form action="{{ url_for('formnv', user_id=employee.maNhanVien if employee is not undefined and employee.maNhanVien != 0 else 0) }}" method="POST" enctype="multipart/form-data">
 
-                    <!-- Display Image -->
+        <!-- Employee Name -->
         <div class="form-group">
-            <label for="photo_display" class="block text-gray-700 font-semibold">Ảnh Nhân Viên</label>
-            <img id="photo_display" src="" alt="Employee Photo" class="w-32 h-32 object-cover rounded-full mt-2 hidden">
+            <label for="tenNhanVien" class="block text-gray-700 font-semibold">Tên Nhân Viên</label>
+            <input type="text" id="tenNhanVien" name="tenNhanVien" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập tên nhân viên" required value="{{ employee.tenNhanVien if employee else '' }}">
         </div>
     
-            <!-- Submit Button -->
-            <div class="form-group flex justify-between">
-                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Lưu Nhân Viên
-                </button>
-                <button type="reset" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
-                    Làm Mới
-                </button>
-            </div>
-        </form>
-    </div>
-    <!-- JavaScript for Image Display -->
+        <!-- Email -->
+        <div class="form-group">
+            <label for="email" class="block text-gray-700 font-semibold">Email</label>
+            <input type="email" id="email" name="email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập email" required value="{{ employee.email if employee else '' }}">
+        </div>
+    
+        <!-- Phone Number -->
+        <div class="form-group">
+            <label for="sdt" class="block text-gray-700 font-semibold">Số Điện Thoại</label>
+            <input type="text" id="sdt" name="sdt" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập số điện thoại" value="{{ employee.sdt if employee else '' }}">
+        </div>
+    
+        <!-- Password -->
+        <div class="form-group">
+            <label for="password" class="block text-gray-700 font-semibold">Mật khẩu</label>
+            <input type="text" id="password" name="password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập mật khẩu" value="{{ employee.password if employee else '' }}">
+        </div>
+    
+        <!-- Role -->
+        <div class="form-group">
+            <label for="vaiTro" class="block text-gray-700 font-semibold">Vị Trí</label>
+            <input type="text" id="vaiTro" name="vaiTro" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập vị trí công việc" value="{{ employee.vaiTro if employee else '' }}">
+        </div>
+    
+        <!-- Department Dropdown -->
+        <div class="form-group">
+            <label for="department" class="block text-gray-700 font-semibold">Phòng Ban</label>
+            <select id="department" name="department" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                {% for department1 in departments %}
+                    <option value="{{ department1.department_id }}" {% if employee and employee.department_id == department1.department_id %}selected{% endif %}>{{ department1.department_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    
+        <!-- Role -->
+        <div class="form-group">
+            <label for="role" class="block text-gray-700 font-semibold">Chức Vụ</label>
+            <input type="text" id="role" name="role" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập chức vụ của nhân viên (admin, user)" value="{{ employee.role if employee else '' }}">
+        </div>
+    
+        <!-- Status (Active/Inactive) -->
+        <div class="form-group">
+            <label for="isActive" class="block text-gray-700 font-semibold">Trạng Thái</label>
+            <select id="isActive" name="isActive" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="1" {% if employee and employee.is_active == 1 %}selected{% endif %}>Đang làm</option>
+                <option value="0" {% if employee and employee.is_active == 0 %}selected{% endif %}>Đã nghỉ</option>
+            </select>
+        </div>
+    
+        <!-- Photo Reference -->
+        <div class="form-group">
+            <label for="photo_reference" class="block text-gray-700 font-semibold">Ảnh Nhân Viên</label>
+            <input type="file" id="photo_reference" name="photo_reference" class="w-full px-4 py-2 border rounded-lg">
+        </div>
+
+        <div class="form-group">
+            <img id="photo_display" src="{{ employee.photo_reference if employee and employee.photo_reference else '' }}" alt="Ảnh Nhân Viên" class=" mt-4 max-w-sm rounded-lg">
+        </div>
+    
+        <!-- Submit Button -->
+        <div class="form-group flex justify-between">
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Lưu Nhân Viên
+            </button>
+            <button type="reset" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                Làm Mới
+            </button>
+        </div>
+    </form>
+    
+</div>
+<!-- JavaScript for Image Display -->
 <script>
-    function displayImage(event) {
-        const photoDisplay = document.getElementById('photo_display');
-        const file = event.target.files[0];
-        const reader = new FileReader();
+function displayImage(event) {
+    const photoDisplay = document.getElementById('photo_display');
+    const file = event.target.files[0];
+    const reader = new FileReader();
 
-        reader.onload = function () {
-            photoDisplay.src = reader.result;
-            photoDisplay.classList.remove('hidden');  // Show the image after it is loaded
-        }
-
-        if (file) {
-            reader.readAsDataURL(file);  // Read the uploaded file
-        }
+    reader.onload = function () {
+        photoDisplay.src = reader.result;
+        photoDisplay.classList.remove('hidden');  // Show the image after it is loaded
     }
-</script>
 
-    </body>
-</html>
+    if (file) {
+        reader.readAsDataURL(file);  // Read the uploaded file
+    }
+}
+</script>
+{% endblock %}
