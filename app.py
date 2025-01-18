@@ -35,10 +35,11 @@ app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests, if you're calling the API from a different domain
 
 # Set the upload folder
-UPLOAD_FOLDER = './PE'  # Change this path based on your project structure
+UPLOAD_FOLDER = './static/images'  # Change this path based on your project structure
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['SECRET_KEY'] = 'your-unique-secret-key'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['UPLOAD_FOLDER_data'] = './static/images/data'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Limit file size to 50MB
 
 
@@ -51,7 +52,6 @@ def connect_db(user, password, db, host, port):
                            port=port,  # Thêm tham số port
                            cursorclass=pymysql.cursors.DictCursor)
 
-conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
 
 @app.route('/api/login', methods=['POST'])
 def login_api():
@@ -61,7 +61,7 @@ def login_api():
 
     if not email or not password:
         return jsonify({"error": "Email và mật khẩu là bắt buộc"}), 400
-
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
     try:
         with conn1.cursor() as cursor:
             # Kiểm tra email và mật khẩu trong bảng Employees
@@ -98,7 +98,7 @@ def index():
 
 def get_attendance_by_id(conn, maNhanVien):
     with conn.cursor() as cursor:
-        query = "SELECT * FROM AttendanceLogs WHERE maNhanVien = %s ORDER BY timeStart DESC"
+        query = "SELECT * FROM AttendanceLogs WHERE sdtNhanVien = %s ORDER BY timeStart DESC"
         cursor.execute(query, (maNhanVien,))
         results = cursor.fetchall()  # Fetch all records, even if there's only one
         if results:
@@ -108,8 +108,9 @@ def get_attendance_by_id(conn, maNhanVien):
         
 
 
-@app.route('/main/<int:user_id>', methods=['GET'])
+@app.route('/main/<string:user_id>', methods=['GET'])
 def login(user_id):
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
     attendance = get_attendance_by_id(conn1, user_id)
     return render_template('index.html', attendance=attendance)  # Tạo một trang web đơn giản để tải ảnh lên
 
@@ -132,6 +133,7 @@ def update_user_password(conn, user_id, hashed_password):
 
 @app.route('/profile/<int:user_id>', methods=['GET', 'POST'])
 def profile(user_id):
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
     user = get_employee_by_id(conn1, user_id)
     if user:
         if request.method == 'POST':
@@ -161,59 +163,6 @@ def start():
 def end():
     return render_template('end.html')  # Tạo một trang web đơn giản để tải ảnh lên  
 
-@app.route('/save-media-start', methods=['POST'])
-def save_media():
-    try:
-        file = request.files.get('file')
-        file_type = request.form.get('fileType')
-
-        # Generate a unique filename based on the timestamp
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
-        file_name = f"ABC_{timestamp}"
-
-        if file_type == 'image' and file:
-            # For image
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{file_name}.jpg")
-            file.save(image_path)
-            return jsonify({"message": "Image saved successfully", "file_path": image_path}), 200
-        
-        
-        elif file_type == 'video' and file:
-            video_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{file_name}.mp4")
-            file.save(video_path)
-            return jsonify({"message": "Video saved successfully", "file_path": video_path}), 200
-
-        return jsonify({"error": "Invalid file type"}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/save-media-end', methods=['POST'])
-def save_media_end():
-    try:
-        file = request.files.get('file')
-        file_type = request.form.get('fileType')
-
-        # Generate a unique filename based on the timestamp
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
-        file_name = f"ABC_{timestamp}"
-
-        if file_type == 'image' and file:
-            # For image
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{file_name}.jpg")
-            file.save(image_path)
-            return jsonify({"message": "Image saved successfully", "file_path": image_path}), 200
-        
-        
-        elif file_type == 'video' and file:
-            video_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{file_name}.mp4")
-            file.save(video_path)
-            return jsonify({"message": "Video saved successfully", "file_path": video_path}), 200
-
-        return jsonify({"error": "Invalid file type"}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
 def get_nv_by_id(conn):
     with conn.cursor() as cursor:
         query = "SELECT * FROM Employees"
@@ -236,11 +185,13 @@ def get_department_by_id(conn):
            
 @app.route('/listnv')
 def listnv():
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
     employees = get_nv_by_id(conn1)
     return render_template('listnv.html', employees=employees)  # Tạo một trang web đơn giản để tải ảnh lên
 
 @app.route('/formnv/<int:user_id>', methods=['GET', 'POST'])
 def formnv(user_id):
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
     department = get_department_by_id(conn1)
     print(user_id)
 
@@ -267,8 +218,9 @@ def formnv(user_id):
         if 'photo_reference' in request.files:
             photo_file = request.files['photo_reference']
             if photo_file:
-                tenfile =tenNhanVien + "_" + sdt + ".jpg"
+                tenfile =email.split("@")[0] + "_" + sdt + ".jpg"
                 image_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{tenfile}.jpg")
+                photo_reference = "/static/images/data" + '/' + tenfile
                 photo_file.save(image_path)
         
         # Update employee data in the database
@@ -294,15 +246,15 @@ def formnv(user_id):
         role = request.form['role']
         isActive = 1 if request.form['isActive'] == '1' else 0
         department_id = request.form['department']
-        print(request.form)
         
         # Handle photo upload
         photo_reference = None
         if 'photo_reference' in request.files:
             photo_file = request.files['photo_reference']
             if photo_file:
-                tenfile =tenNhanVien + "_" + sdt + ".jpg"
+                tenfile =email.split("@")[0] + "_" + sdt + ".jpg"
                 image_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{tenfile}.jpg")
+                photo_reference = "/static/images/data" + '/' + tenfile
                 photo_file.save(image_path)
         
         # Insert into Employees table
@@ -319,9 +271,9 @@ def formnv(user_id):
     
     return render_template('formnhanvien.html', departments =department)  # Tạo một trang web đơn giản để tải ảnh lên
 
-
 @app.route('/listlogattendace/<int:user_id>', methods=['GET'])
 def listlogattendace(user_id):
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
     attendances = get_attendance_by_id(conn1, user_id)
     return render_template('listlogattendace.html', attendances = attendances)  # Tạo một trang web đơn giản để tải ảnh lên
 
@@ -337,12 +289,14 @@ def get_log_deepfake_by_id(conn, maNhanVien):
 
 @app.route('/listlogdeepfake/<int:attendance_id>', methods=['GET'])
 def listlogdeepfake(attendance_id):
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
     log_deepfake = get_log_deepfake_by_id(conn1, attendance_id)
     print(log_deepfake)
     return render_template('listlogdeepfake.html', logDeepfake = log_deepfake)  # Tạo một trang web đơn giản để tải ảnh lên
 
 @app.route('/api/changeStatus/<int:maNhanVien>', methods=['POST'])
 def change_status(maNhanVien):
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
     try:
         with conn1.cursor() as cursor:
             # Cập nhật trạng thái IsActive
@@ -360,29 +314,110 @@ def change_status(maNhanVien):
         print(f"Lỗi: {e}")
         return jsonify({'error': 'Đã xảy ra lỗi trong quá trình xử lý'}), 500
 
+@app.route('/save-media-start', methods=['POST'])
+def save_media():
+    try:
+        file = request.files.get('file')
+        file_type = request.form.get('fileType')
+        sdt = request.form.get('sdt')
 
-@app.route('/index1')
-def index1():
-    return render_template('index1.html')  # Tạo một trang web đơn giản để tải ảnh lên
+        # Generate a unique filename based on the timestamp
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
+        file_name = f"{sdt}_{timestamp}"
 
+        if file_type == 'image' and file:
+            # For image
+            image_path = os.path.join(app.config['UPLOAD_FOLDER_data'], f"{file_name}.jpg")
+            file.save(image_path)
+            file_path = f"/static/images/data/{file_name}.jpg"
+            return jsonify({"message": "Image saved successfully", "file_path": file_path}), 200
+        
+        elif file_type == 'video' and file:
+            video_path = os.path.join(app.config['UPLOAD_FOLDER_data'], f"{file_name}.mp4")
+            file.save(video_path)
+            return jsonify({"message": "Video saved successfully", "file_path": video_path}), 200
+        
+        return jsonify({"error": "Invalid file type"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-# Hàm đánh dấu điểm danh
-def markAttendance(name, class_):
-    current_time = datetime.now().strftime('%H:%M:%S')
-    current_date = datetime.now().strftime('%Y-%m-%d')
-    print(f"Marking attendance for: {name}, {class_}, {current_time}, {current_date}")
-    # Bạn có thể thay đổi cách điểm danh theo ý muốn (ví dụ lưu vào cơ sở dữ liệu)
-    with open('Attendance.csv', mode='a') as file:
-        file.write(f'{name},{class_},{current_time},{current_date}\n')
-    beepy.beep(sound=2)
+def handle_start_again(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart):
+    # Kết nối đến cơ sở dữ liệu
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    try:
+            with conn1.cursor() as cursor:
+                # Truy vấn kiểm tra bản ghi đã tồn tại
+                sql_check = """
+                    SELECT `logId` 
+                    FROM `AttendanceLogs`
+                    WHERE `sdtNhanVien` = %s AND DATE(`timeStart`) = DATE(CURRENT_TIMESTAMP())
+                """
+                cursor.execute(sql_check, (Sdt))
+                result = cursor.fetchone()
+                print(result)
 
-@app.route('/attendance', methods=['POST'])
-def attendance():
-    if 'image' not in request.files:
-        return redirect(request.url)
-    file = request.files['image']
-    if file.filename == '':
-        return redirect(request.url)
+                if result:  # Nếu bản ghi tồn tại, cập nhật
+                    logId = result['logId']
+                    sql_update = """
+                        UPDATE `AttendanceLogs`
+                        SET 
+                            `timeStart` = CURRENT_TIMESTAMP,
+                            `statusStart` = %s,
+                            `isDeepfakeDetectedStart` = %s,
+                            `deepfakeScoreStart` = %s,
+                            `photoCapturedStart` = %s
+                        WHERE `logId` = %s
+                    """
+                    cursor.execute(sql_update, (statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart, logId))
+                    print(f"Bản ghi logId = {logId} đã được cập nhật.")
+                    conn1.commit()
+                    conn1.close()
+                    beepy.beep(sound=2)
+                else:
+                    handle_start(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart)
+    except Exception as e:
+            print(f"Đã xảy ra lỗi: {e}")
+
+def save_media(file, file_type, email,sdt):
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
+    file_name = f"{email}_{sdt}_{timestamp}"
+    if file_type == 'image' and file:
+        image_path = os.path.join(app.config['UPLOAD_FOLDER_data'], f"{file_name}.jpg")
+        file.save(image_path)
+        return '/static/images/data/' + file_name + '.jpg'
+
+def handle_start(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart):
+    try:
+        conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+        with conn1.cursor() as cursor:
+            # Câu lệnh INSERT
+            sql = """
+                INSERT INTO `AttendanceLogs` (
+                    `sdtNhanVien`, 
+                    `timeStart`, 
+                    `statusStart`, 
+                    `isDeepfakeDetectedStart`, 
+                    `deepfakeScoreStart`, 
+                    `photoCapturedStart`
+                ) VALUES (%s, CURRENT_TIMESTAMP, %s, %s, %s, %s)
+            """
+            # Thực thi câu lệnh
+            cursor.execute(sql, (Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart))
+            # Lưu thay đổi vào cơ sở dữ liệu
+            conn1.commit()
+            print("Dữ liệu đã được chèn thành công vào bảng AttendanceLogs.")
+    except Exception as e:
+        print(f"Đã xảy ra lỗi: {e}")
+    finally:
+        # Đóng kết nối
+        beepy.beep(sound=2)
+        conn1.close()
+
+@app.route('/attendance/start', methods=['POST'])
+def insert_start_api():
+    file = request.files.get('image')
+    filePath = request.form.get('filePath')
+    sdt = request.form.get('sdt')
     
     # Đọc ảnh từ người dùng
     img = np.array(bytearray(file.read()), dtype=np.uint8)
@@ -394,7 +429,7 @@ def attendance():
     # Phát hiện khuôn mặt trong ảnh
     face_locations = face_recognition.face_locations(imgRGB)
     face_encodings = face_recognition.face_encodings(imgRGB, face_locations)
-    
+
     for encoded_face in face_encodings:
         matches = face_recognition.compare_faces(encoded_face_train, encoded_face)
         face_distances = face_recognition.face_distance(encoded_face_train, encoded_face)
@@ -402,16 +437,129 @@ def attendance():
         
         if 0 <= match_index < len(classNames):
             name_class = classNames[match_index]
+
             if "_" in name_class:
-                class_ = name_class.split('_')[1]
-                name = name_class.split('_')[0]
+                sdt_check = name_class.split('_')[1]
+                email_check = name_class.split('_')[0]
             else:
-                class_ = "Unknown"  
-                name = name_class
+                sdt_check = "Unknown"  
+                email_check = name_class
             
-            markAttendance(name, class_)
+            check = "NOT"
+            if sdt == sdt_check:
+                check = "SUCCESS"
+            else:
+                check = "FAILED"
+                
+            handle_start_again(sdt, check, 0, 0.0, filePath)
+
+            response_data = {
+                'status': 'OK',
+                'message': check
+            }
+            return jsonify(response_data)
     
-    return redirect(url_for('index1'))  # Redirect về trang chính sau khi điểm danh
+    response_data = {
+        'status': 'NOT'
+    }
+    return  jsonify(response_data)
+
+def handle_end(Sdt, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCapturedEnd):
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    try:
+            with conn1.cursor() as cursor:
+                # Truy vấn kiểm tra bản ghi đã tồn tại
+                sql_check = """
+                    SELECT `logId` 
+                    FROM `AttendanceLogs`
+                    WHERE WHERE `sdtNhanVien` = %s AND DATE(`timeStart`) = DATE(CURRENT_TIMESTAMP())
+                """
+                cursor.execute(sql_check, (Sdt))
+                result = cursor.fetchone()
+
+                if result:  # Nếu bản ghi tồn tại, cập nhật
+                    logId = result['logId']
+                    sql_update = """
+                        UPDATE `AttendanceLogs`
+                        SET 
+                            `timeEnd` = CURRENT_TIMESTAMP,
+                            `statusEnd` = %s,
+                            `isDeepfakeDetectedEnd` = %s,
+                            `deepfakeScoreEnd` = %s,
+                            `photoCapturedEnd` = %s
+                        WHERE `logId` = %s
+                    """
+                    cursor.execute(sql_update, (statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCapturedEnd, logId))
+                    print(f"Bản ghi logId = {logId} đã được cập nhật.")
+                else:  # Nếu không, chèn mới
+                    sql_insert = """
+                        INSERT INTO `AttendanceLogs` (
+                            `sdtNhanVien`, `timeStart`, `statusStart`, `isDeepfakeDetectedStart`, `deepfakeScoreStart`, `photoCapturedStart`,
+                            `timeEnd`, `statusEnd`, `isDeepfakeDetectedEnd`, `deepfakeScoreEnd`, `photoCapturedEnd`
+                        ) VALUES (
+                            %s, CURRENT_TIMESTAMP, 'NOT', 0, 0.0, '', CURRENT_TIMESTAMP, %s, %s, %s, %s
+                        )
+                    """
+                    cursor.execute(sql_insert, (Sdt, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCapturedEnd))
+                    print("Bản ghi mới đã được chèn vào bảng AttendanceLogs.")
+                # Lưu thay đổi
+                conn1.commit()
+    except Exception as e:
+            print(f"Đã xảy ra lỗi: {e}")
+    finally:
+            # Đóng kết nối
+            conn1.close()
+
+
+@app.route('/attendance/end', methods=['POST'])
+def insert_end_api():
+    file = request.files.get('image')
+    filePath = request.form.get('filePath')
+    sdt = request.form.get('sdt')
+    
+    # Đọc ảnh từ người dùng
+    img = np.array(bytearray(file.read()), dtype=np.uint8)
+    img = cv2.imdecode(img, cv2.IMREAD_COLOR)
+    
+    # Chuyển ảnh sang định dạng RGB
+    imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    
+    # Phát hiện khuôn mặt trong ảnh
+    face_locations = face_recognition.face_locations(imgRGB)
+    face_encodings = face_recognition.face_encodings(imgRGB, face_locations)
+
+    for encoded_face in face_encodings:
+        matches = face_recognition.compare_faces(encoded_face_train, encoded_face)
+        face_distances = face_recognition.face_distance(encoded_face_train, encoded_face)
+        match_index = np.argmin(face_distances)
+        
+        if 0 <= match_index < len(classNames):
+            name_class = classNames[match_index]
+
+            if "_" in name_class:
+                sdt_check = name_class.split('_')[1]
+                email_check = name_class.split('_')[0]
+            else:
+                sdt_check = "Unknown"  
+                email_check = name_class
+            
+            check = "NOT"
+            if sdt == sdt_check:
+                check = "SUCCESS"
+            else:
+                check = "FAILED"
+                
+            handle_end(sdt, check, 0, 0.0, filePath)
+            response_data = {
+                'status': 'OK',
+                'message': check
+            }
+            return jsonify(response_data)
+    
+    response_data = {
+        'status': 'NOT'
+    }
+    return  jsonify(response_data)
 
 if __name__ == '__main__':
     app.run(debug=True)

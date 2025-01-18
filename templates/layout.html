@@ -94,8 +94,27 @@
 
         document.getElementById('admin-page').addEventListener('click', function(e) {
             e.preventDefault();
-            window.location.href = '/listnv';
+            
+            // Lấy thông tin từ localStorage
+            var employeeData = localStorage.getItem('employee');
+            
+            if (employeeData) {
+                var employee = JSON.parse(employeeData);
+                
+                // Kiểm tra vai trò của người dùng
+                if (employee.role === 'admin') {
+                    // Chuyển hướng đến trang quản lý
+                    window.location.href = '/listnv';
+                } else {
+                    // Thông báo lỗi
+                    alert('Bạn không có quyền truy cập trang quản lý!');
+                }
+            } else {
+                // Nếu không tìm thấy dữ liệu, cảnh báo người dùng
+                alert('Không tìm thấy thông tin người dùng! Vui lòng đăng nhập lại.');
+            }
         });
+
 
         document.getElementById('start-a').addEventListener('click', function(e) {
             e.preventDefault();

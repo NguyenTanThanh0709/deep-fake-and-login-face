@@ -11,7 +11,7 @@
         // Kiểm tra nếu localStorage có employee
         const employee = localStorage.getItem('employee');
         if (employee) {
-            var userId = JSON.parse(employee).maNhanVien;
+            var userId = JSON.parse(employee).sdt;
             window.location.href = '/main/' + userId; // Chuyển hướng đến trang chính
         }
     </script>
@@ -22,7 +22,7 @@
         <div class="container-fluid">
             <div class="navbar-header">
                 <a class="navbar-brand" href="/">
-                    <img src="/static/images/key-person.png" alt="icon" style="height:35px;width:40px;">
+                    <img src="/static/images/C_0333657671.jpg" alt="icon" style="height:35px;width:40px;">
                     Face Recognition Based Attendance System
                 </a>
             </div>
@@ -101,7 +101,7 @@
                 if (response.ok) {
                     alert(result.message);
                     localStorage.setItem('employee', JSON.stringify(result.employee));
-                    window.location.href = '/main/' + result.maNhanVien;
+                    window.location.href = '/' ;
                 } else {
                     alert(result.error);
                 }

@@ -43,7 +43,7 @@ menubar.add_cascade(label="File", menu=filemenu)
 root.config(menu=menubar)
 
 # Load and preprocess images
-path = Path(__file__).resolve().parent / 'Pe'
+path = Path(__file__).resolve().parent / 'static/images'
 images = []
 classNames = []
 mylist = os.listdir(path)
