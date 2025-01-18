@@ -28,15 +28,7 @@ def load_model(model_file='model.pkl'):
 # Lấy mô hình
 encoded_face_train, classNames = load_model()
 
-# Hàm đánh dấu điểm danh
-def markAttendance(name, class_):
-    current_time = datetime.now().strftime('%H:%M:%S')
-    current_date = datetime.now().strftime('%Y-%m-%d')
-    print(f"Marking attendance for: {name}, {class_}, {current_time}, {current_date}")
-    # Bạn có thể thay đổi cách điểm danh theo ý muốn (ví dụ lưu vào cơ sở dữ liệu)
-    with open('Attendance.csv', mode='a') as file:
-        file.write(f'{name},{class_},{current_time},{current_date}\n')
-    beepy.beep(sound=2)
+
 
 # Flask App
 app = Flask(__name__)
@@ -368,6 +360,22 @@ def change_status(maNhanVien):
         print(f"Lỗi: {e}")
         return jsonify({'error': 'Đã xảy ra lỗi trong quá trình xử lý'}), 500
 
+
+@app.route('/index1')
+def index1():
+    return render_template('index1.html')  # Tạo một trang web đơn giản để tải ảnh lên
+
+
+# Hàm đánh dấu điểm danh
+def markAttendance(name, class_):
+    current_time = datetime.now().strftime('%H:%M:%S')
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    print(f"Marking attendance for: {name}, {class_}, {current_time}, {current_date}")
+    # Bạn có thể thay đổi cách điểm danh theo ý muốn (ví dụ lưu vào cơ sở dữ liệu)
+    with open('Attendance.csv', mode='a') as file:
+        file.write(f'{name},{class_},{current_time},{current_date}\n')
+    beepy.beep(sound=2)
+
 @app.route('/attendance', methods=['POST'])
 def attendance():
     if 'image' not in request.files:
@@ -403,7 +411,7 @@ def attendance():
             
             markAttendance(name, class_)
     
-    return redirect(url_for('index'))  # Redirect về trang chính sau khi điểm danh
+    return redirect(url_for('index1'))  # Redirect về trang chính sau khi điểm danh
 
 if __name__ == '__main__':
     app.run(debug=True)
