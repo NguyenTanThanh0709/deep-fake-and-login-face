@@ -11,7 +11,7 @@
  Target Server Version : 90100 (9.1.0)
  File Encoding         : 65001
 
- Date: 19/01/2025 04:32:46
+ Date: 19/01/2025 22:04:02
 */
 
 SET NAMES utf8mb4;
@@ -25,12 +25,12 @@ CREATE TABLE `AttendanceLogs`  (
   `logId` bigint NOT NULL AUTO_INCREMENT,
   `sdtNhanVien` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `timeStart` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `statusStart` enum('SUCCESS','FAILED','NOT') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `statusStart` enum('SUCCESS','FAILED','NOT','NOT DEEPFAKE') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `isDeepfakeDetectedStart` tinyint(1) NOT NULL DEFAULT 0,
   `deepfakeScoreStart` float NOT NULL,
   `photoCapturedStart` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `timeEnd` timestamp NULL DEFAULT NULL,
-  `statusEnd` enum('SUCCESS','FAILED','NOT') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'NOT',
+  `statusEnd` enum('SUCCESS','FAILED','NOT','NOT DEEPFAKE') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'NOT',
   `isDeepfakeDetectedEnd` tinyint(1) NULL DEFAULT NULL,
   `deepfakeScoreEnd` float NULL DEFAULT NULL,
   `photoCapturedEnd` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
@@ -50,8 +50,6 @@ CREATE TABLE `DeepfakeLogs`  (
   `deepfake_log_id` bigint NOT NULL AUTO_INCREMENT,
   `log_id` bigint NULL DEFAULT NULL,
   `detection_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `deepfake_score` float NOT NULL,
-  `Prediction` varchar(10) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
   `photo_analyzed` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
   PRIMARY KEY (`deepfake_log_id`) USING BTREE,
   INDEX `log_id`(`log_id` ASC) USING BTREE,

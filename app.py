@@ -18,6 +18,8 @@ from models.Employee import Employee
 from models.AttendanceLog import AttendanceLog
 from models.Department import Department
 from models.DeepfakeLog import DeepfakeLog
+from tensorflow.keras.models import load_model
+
 
 # Tải mô hình đã lưu
 def load_model(model_file='model.pkl'):
@@ -25,10 +27,70 @@ def load_model(model_file='model.pkl'):
         model_data = pickle.load(f)
     return model_data['encoded_faces'], model_data['class_names']
 
+
+modeldeepfake = load_model('deepfake_detection_model.h5')
+
 # Lấy mô hình
 encoded_face_train, classNames = load_model()
 
+# Hàm trích xuất khung hình từ video
+def extract_frames(video_path):
+    cap = cv2.VideoCapture(video_path)
+    frames = []
+    
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        # Thay đổi kích thước khung hình về kích thước mà mô hình yêu cầu (ví dụ: 299x299)
+        frame = cv2.resize(frame, (299, 299))  # Thay đổi kích thước cho phù hợp với mô hình
+        frames.append(frame)
+    
+    cap.release()
+    return frames
 
+# Hàm chuẩn hóa các khung hình (chuyển từ [0, 255] về [0, 1])
+def preprocess_frames(frames):
+    frames = np.array(frames, dtype='float32') / 255.0  # Chuẩn hóa
+    return frames
+
+# Hàm dự đoán xem video có chứa deepfake hay không
+def predict_deepfake(video_path):
+    frames = extract_frames(video_path)
+    
+    if not frames:
+        print("Không tìm thấy khung hình nào trong video!")
+        return
+    
+    preprocessed_frames = preprocess_frames(frames)
+
+    # Dự đoán cho các khung hình
+    predictions = modeldeepfake.predict(preprocessed_frames)
+
+    # Xử lý kết quả: dự đoán các khung hình có phải deepfake hay không (0 hoặc 1)
+    predicted_classes = (predictions > 0.5).astype("int32")
+    
+    # Đếm số lượng khung hình deepfake
+    deepfake_score = np.mean(predictions)  # Trung bình các giá trị xác suất
+    deepfake_count = np.sum(predicted_classes)
+    total_frames = len(predicted_classes)
+    print(f"Deepfake Score: {deepfake_score:.2f}")  # Hiển thị điểm số với 2 chữ số thập phân
+
+
+    print(f"Tổng số khung hình: {total_frames}")
+    print(f"Số khung hình deepfake: {deepfake_count}")
+
+    # Kết luận kết hợp
+    if deepfake_score > 0.7 or deepfake_count > total_frames / 2:
+        print("Video này có khả năng cao là deepfake.")
+        return True, deepfake_score
+    elif deepfake_score < 0.3 and deepfake_count < total_frames / 2:
+        print("Video này có khả năng cao là thật.")
+        return False, deepfake_score
+    else:
+        print("Không chắc chắn về độ thật/giả của video này.")
+        return None, deepfake_score
 
 # Flask App
 app = Flask(__name__)
@@ -335,7 +397,8 @@ def save_media():
         elif file_type == 'video' and file:
             video_path = os.path.join(app.config['UPLOAD_FOLDER_data'], f"{file_name}.mp4")
             file.save(video_path)
-            return jsonify({"message": "Video saved successfully", "file_path": video_path}), 200
+            file_path = f"/static/images/data/{file_name}.jpg"
+            return jsonify({"message": "Video saved successfully", "file_path": file_path}), 200
         
         return jsonify({"error": "Invalid file type"}), 400
     except Exception as e:
@@ -413,56 +476,189 @@ def handle_start(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, 
         beepy.beep(sound=2)
         conn1.close()
 
+
+def handle_deepfake_log_insert(Sdt,photo_analyzed):
+    try:
+        conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+        with conn1.cursor() as cursor:
+                            # Truy vấn kiểm tra bản ghi đã tồn tại
+            sql_check = """
+                SELECT `logId` 
+                FROM `AttendanceLogs`
+                WHERE `sdtNhanVien` = %s AND DATE(`timeStart`) = DATE(CURRENT_TIMESTAMP())
+            """
+            cursor.execute(sql_check, (Sdt))
+            result = cursor.fetchone()
+            print(result)
+            if result:
+                logId = result['logId']
+                # Câu lệnh INSERT cho DeepfakeLogs
+                sql = """
+                    INSERT INTO `DeepfakeLogs` (
+                        `log_id`, 
+                        `photo_analyzed`
+                    ) VALUES (%s, %s)
+                """
+                # Thực thi câu lệnh
+                cursor.execute(sql, (logId, photo_analyzed))
+                # Lưu thay đổi vào cơ sở dữ liệu
+                conn1.commit()
+                print("Dữ liệu đã được chèn thành công vào bảng DeepfakeLogs.")
+            else:
+                raise Exception("Không tìm thấy logId tương ứng trong bảng AttendanceLogs.")
+    except Exception as e:
+        print(f"Đã xảy ra lỗi: {e}")
+    finally:
+        # Đóng kết nối
+        beepy.beep(sound=2)
+        conn1.close()
+
+def handle_start_again_attendance_deepfake(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart):
+    # Kết nối đến cơ sở dữ liệu
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    try:
+            with conn1.cursor() as cursor:
+                # Truy vấn kiểm tra bản ghi đã tồn tại
+                sql_check = """
+                    SELECT `logId` 
+                    FROM `AttendanceLogs`
+                    WHERE `sdtNhanVien` = %s AND DATE(`timeStart`) = DATE(CURRENT_TIMESTAMP())
+                """
+                cursor.execute(sql_check, (Sdt))
+                result = cursor.fetchone()
+                print(result)
+
+                if result:  # Nếu bản ghi tồn tại, cập nhật
+                    logId = result['logId']
+                    sql_update = """
+                        UPDATE `AttendanceLogs`
+                        SET 
+                            `statusStart` = %s,
+                            `isDeepfakeDetectedStart` = %s,
+                            `deepfakeScoreStart` = %s,
+                        WHERE `logId` = %s
+                    """
+                    cursor.execute(sql_update, (statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, logId))
+                    print(f"Bản ghi logId = {logId} đã được cập nhật.")
+                    conn1.commit()
+                    conn1.close()
+                    beepy.beep(sound=2)
+                else:
+                    raise Exception("Bản ghi không tồn tại")
+    except Exception as e:
+            print(f"Đã xảy ra lỗi: {e}")
+
+def handle_End_again_attendance_deepfake(Sdt, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd):
+    # Kết nối đến cơ sở dữ liệu
+    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    try:
+            with conn1.cursor() as cursor:
+                # Truy vấn kiểm tra bản ghi đã tồn tại
+                sql_check = """
+                    SELECT `logId` 
+                    FROM `AttendanceLogs`
+                    WHERE `sdtNhanVien` = %s AND DATE(`timeStart`) = DATE(CURRENT_TIMESTAMP())
+                """
+                cursor.execute(sql_check, (Sdt))
+                result = cursor.fetchone()
+                print(result)
+
+                if result:  # Nếu bản ghi tồn tại, cập nhật
+                    logId = result['logId']
+                    sql_update = """
+                        UPDATE `AttendanceLogs`
+                        SET 
+                            `statusEnd` = %s,
+                            `isDeepfakeDetectedEnd` = %s,
+                            `deepfakeScoreEnd` = %s,
+                        WHERE `logId` = %s
+                    """
+                    cursor.execute(sql_update, (statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, logId))
+                    print(f"Bản ghi logId = {logId} đã được cập nhật.")
+                    conn1.commit()
+                    conn1.close()
+                    beepy.beep(sound=2)
+                else:
+                    raise Exception("Bản ghi không tồn tại")
+    except Exception as e:
+            print(f"Đã xảy ra lỗi: {e}")
+
 @app.route('/attendance/start', methods=['POST'])
 def insert_start_api():
     file = request.files.get('image')
     filePath = request.form.get('filePath')
+    fileType = request.form.get('fileType')
     sdt = request.form.get('sdt')
     
-    # Đọc ảnh từ người dùng
-    img = np.array(bytearray(file.read()), dtype=np.uint8)
-    img = cv2.imdecode(img, cv2.IMREAD_COLOR)
-    
-    # Chuyển ảnh sang định dạng RGB
-    imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    
-    # Phát hiện khuôn mặt trong ảnh
-    face_locations = face_recognition.face_locations(imgRGB)
-    face_encodings = face_recognition.face_encodings(imgRGB, face_locations)
-
-    for encoded_face in face_encodings:
-        matches = face_recognition.compare_faces(encoded_face_train, encoded_face)
-        face_distances = face_recognition.face_distance(encoded_face_train, encoded_face)
-        match_index = np.argmin(face_distances)
-        
-        if 0 <= match_index < len(classNames):
-            name_class = classNames[match_index]
-
-            if "_" in name_class:
-                sdt_check = name_class.split('_')[1]
-                email_check = name_class.split('_')[0]
-            else:
-                sdt_check = "Unknown"  
-                email_check = name_class
+    if fileType == 'image':
             
-            check = "NOT"
-            if sdt == sdt_check:
-                check = "SUCCESS"
-            else:
-                check = "FAILED"
-                
-            handle_start_again(sdt, check, 0, 0.0, filePath)
+        # Đọc ảnh từ người dùng
+        img = np.array(bytearray(file.read()), dtype=np.uint8)
+        img = cv2.imdecode(img, cv2.IMREAD_COLOR)
+        
+        # Chuyển ảnh sang định dạng RGB
+        imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        # Phát hiện khuôn mặt trong ảnh
+        face_locations = face_recognition.face_locations(imgRGB)
+        face_encodings = face_recognition.face_encodings(imgRGB, face_locations)
 
+        for encoded_face in face_encodings:
+            matches = face_recognition.compare_faces(encoded_face_train, encoded_face)
+            face_distances = face_recognition.face_distance(encoded_face_train, encoded_face)
+            match_index = np.argmin(face_distances)
+            
+            if 0 <= match_index < len(classNames):
+                name_class = classNames[match_index]
+
+                if "_" in name_class:
+                    sdt_check = name_class.split('_')[1]
+                    email_check = name_class.split('_')[0]
+                else:
+                    sdt_check = "Unknown"  
+                    email_check = name_class
+                
+                check = "NOT"
+                if sdt == sdt_check:
+                    check = "NOT DEEPFAKE"
+                else:
+                    check = "FAILED"
+                    
+                handle_start_again(sdt, check, 0, 0.0, filePath)
+
+                response_data = {
+                    'status': 'OK',
+                    'message': check
+                }
+                return jsonify(response_data)
+        
+        response_data = {
+            'status': 'NOT'
+        }
+        return  jsonify(response_data)
+    else:
+        checkDeepFake, ScoreDeepFake = predict_deepfake(filePath)
+        if checkDeepFake == True:
+            handle_start_again_attendance_deepfake(sdt,"FAILED", 1, ScoreDeepFake)
+            handle_deepfake_log_insert(sdt,filePath)
             response_data = {
-                'status': 'OK',
-                'message': check
+            'status': 'FAILED'
             }
             return jsonify(response_data)
-    
-    response_data = {
-        'status': 'NOT'
-    }
-    return  jsonify(response_data)
+        elif checkDeepFake == False:
+            handle_start_again_attendance_deepfake(sdt,"SUCCESS", 0, ScoreDeepFake)
+            handle_deepfake_log_insert(sdt,filePath)
+            response_data = {
+            'status': 'SUCCESS'
+            }
+            return jsonify(response_data)            
+        else:
+            handle_start_again_attendance_deepfake(sdt,"NOT DEEPFAKE", 0, ScoreDeepFake)
+            handle_deepfake_log_insert(sdt,filePath)
+            response_data = {
+            'status': 'NOT DEEPFAKE'
+            }
+            return jsonify(response_data)              
 
 def handle_end(Sdt, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCapturedEnd):
     conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
@@ -510,52 +706,76 @@ def handle_end(Sdt, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCap
             # Đóng kết nối
             conn1.close()
 
-
 @app.route('/attendance/end', methods=['POST'])
 def insert_end_api():
     file = request.files.get('image')
     filePath = request.form.get('filePath')
     sdt = request.form.get('sdt')
-    
-    # Đọc ảnh từ người dùng
-    img = np.array(bytearray(file.read()), dtype=np.uint8)
-    img = cv2.imdecode(img, cv2.IMREAD_COLOR)
-    
-    # Chuyển ảnh sang định dạng RGB
-    imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    
-    # Phát hiện khuôn mặt trong ảnh
-    face_locations = face_recognition.face_locations(imgRGB)
-    face_encodings = face_recognition.face_encodings(imgRGB, face_locations)
+    fileType = request.form.get('fileType')
 
-    for encoded_face in face_encodings:
-        matches = face_recognition.compare_faces(encoded_face_train, encoded_face)
-        face_distances = face_recognition.face_distance(encoded_face_train, encoded_face)
-        match_index = np.argmin(face_distances)
+    if fileType == 'image':
+        # Đọc ảnh từ người dùng
+        img = np.array(bytearray(file.read()), dtype=np.uint8)
+        img = cv2.imdecode(img, cv2.IMREAD_COLOR)
         
-        if 0 <= match_index < len(classNames):
-            name_class = classNames[match_index]
+        # Chuyển ảnh sang định dạng RGB
+        imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        # Phát hiện khuôn mặt trong ảnh
+        face_locations = face_recognition.face_locations(imgRGB)
+        face_encodings = face_recognition.face_encodings(imgRGB, face_locations)
 
-            if "_" in name_class:
-                sdt_check = name_class.split('_')[1]
-                email_check = name_class.split('_')[0]
-            else:
-                sdt_check = "Unknown"  
-                email_check = name_class
+        for encoded_face in face_encodings:
+            matches = face_recognition.compare_faces(encoded_face_train, encoded_face)
+            face_distances = face_recognition.face_distance(encoded_face_train, encoded_face)
+            match_index = np.argmin(face_distances)
             
-            check = "NOT"
-            if sdt == sdt_check:
-                check = "SUCCESS"
-            else:
-                check = "FAILED"
+            if 0 <= match_index < len(classNames):
+                name_class = classNames[match_index]
+
+                if "_" in name_class:
+                    sdt_check = name_class.split('_')[1]
+                    email_check = name_class.split('_')[0]
+                else:
+                    sdt_check = "Unknown"  
+                    email_check = name_class
                 
-            handle_end(sdt, check, 0, 0.0, filePath)
+                check = "NOT"
+                if sdt == sdt_check:
+                    check = "SUCCESS"
+                else:
+                    check = "FAILED"
+                    
+                handle_end(sdt, check, 0, 0.0, filePath)
+                response_data = {
+                    'status': 'OK',
+                    'message': check
+                }
+                return jsonify(response_data)
+    else:
+        checkDeepFake, ScoreDeepFake = predict_deepfake(filePath)
+        if checkDeepFake == True:
+            handle_End_again_attendance_deepfake(sdt,"FAILED", 1, ScoreDeepFake)
+            handle_deepfake_log_insert(sdt,filePath)
             response_data = {
-                'status': 'OK',
-                'message': check
+            'status': 'FAILED'
             }
             return jsonify(response_data)
-    
+        elif checkDeepFake == False:
+            handle_End_again_attendance_deepfake(sdt,"SUCCESS", 0, ScoreDeepFake)
+            handle_deepfake_log_insert(sdt,filePath)
+            response_data = {
+            'status': 'SUCCESS'
+            }
+            return jsonify(response_data)            
+        else:
+            handle_End_again_attendance_deepfake(sdt,"NOT DEEPFAKE", 0, ScoreDeepFake)
+            handle_deepfake_log_insert(sdt,filePath)
+            response_data = {
+            'status': 'NOT DEEPFAKE'
+            }
+            return jsonify(response_data)  
+        
     response_data = {
         'status': 'NOT'
     }

@@ -13,8 +13,6 @@
                 <th class="px-4 py-2">Mã Logs</th>
                 <th class="px-4 py-2">Mã Logs Điểm Danh</th>
                 <th class="px-4 py-2">Thời Gian Phát Hiện</th>
-                <th class="px-4 py-2">Deepfake Score</th>
-                <th class="px-4 py-2">Dự Đoán</th>
                 <th class="px-4 py-2">Ảnh Phân Tích</th> <!-- Analyzed Photo Column -->
             </tr>
         </thead>
@@ -23,11 +21,12 @@
             <tr>
                 <td class="px-4 py-2">{{ log.deepfake_log_id }}</td>
                 <td class="px-4 py-2">{{ log.log_id }}</td>
-                <td class="px-4 py-2">{{ log.detection_time }}</td>
-                <td class="px-4 py-2">{{ log.deepfake_score }}</td>
                 <td class="px-4 py-2">{{ log.prediction }}</td>
                 <td class="px-4 py-2">
-                    <img src="{{ log.photo_analyzed }}" alt="Analyzed Photo" style="width:100px; height:auto;">
+                    <video width="200" controls>
+                        <source src="{{ log.photo_analyzed }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
                 </td>
             </tr>
             {% else %}
