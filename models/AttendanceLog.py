@@ -1,8 +1,9 @@
 class AttendanceLog:
-    def __init__(self, logId, maNhanVien, timeStart, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart,
-                 timeEnd, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCapturedEnd):
+    def __init__(self, logId, sdtNhanVien, timeStart, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart,
+                 timeEnd, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCapturedEnd, LinkVideoDeepFakeStart, LinkVideoDeepFakeEnd,
+                 StatusDeepFakeStart, StatusDeepFakeEnd):
         self.logId = logId
-        self.maNhanVien = maNhanVien
+        self.sdtNhanVien = sdtNhanVien
         self.timeStart = timeStart
         self.statusStart = statusStart
         self.isDeepfakeDetectedStart = isDeepfakeDetectedStart
@@ -13,12 +14,17 @@ class AttendanceLog:
         self.isDeepfakeDetectedEnd = isDeepfakeDetectedEnd
         self.deepfakeScoreEnd = deepfakeScoreEnd
         self.photoCapturedEnd = photoCapturedEnd
+        self.LinkVideoDeepFakeStart = LinkVideoDeepFakeStart
+        self.LinkVideoDeepFakeEnd = LinkVideoDeepFakeEnd
+        self.StatusDeepFakeStart = StatusDeepFakeStart
+        self.StatusDeepFakeEnd = StatusDeepFakeEnd
+        
 
     @staticmethod
     def from_dict(data):
         return AttendanceLog(
             logId=data.get('logId'),
-            maNhanVien=data.get('maNhanVien'),
+            sdtNhanVien=data.get('sdtNhanVien'),
             timeStart=data.get('timeStart'),
             statusStart=data.get('statusStart'),
             isDeepfakeDetectedStart=data.get('isDeepfakeDetectedStart'),
@@ -28,13 +34,17 @@ class AttendanceLog:
             statusEnd=data.get('statusEnd'),
             isDeepfakeDetectedEnd=data.get('isDeepfakeDetectedEnd'),
             deepfakeScoreEnd=data.get('deepfakeScoreEnd'),
-            photoCapturedEnd=data.get('photoCapturedEnd')
+            photoCapturedEnd=data.get('photoCapturedEnd'),
+            LinkVideoDeepFakeStart=data.get('LinkVideoDeepFakeStart'),
+            LinkVideoDeepFakeEnd=data.get('LinkVideoDeepFakeEnd'),
+            StatusDeepFakeStart=data.get('StatusDeepFakeStart'),
+            StatusDeepFakeEnd=data.get('StatusDeepFakeEnd')
         )
 
     def to_dict(self):
         return {
             "logId": self.logId,
-            "maNhanVien": self.maNhanVien,
+            "sdtNhanVien": self.sdtNhanVien,
             "timeStart": self.timeStart,
             "statusStart": self.statusStart,
             "isDeepfakeDetectedStart": self.isDeepfakeDetectedStart,
@@ -44,5 +54,9 @@ class AttendanceLog:
             "statusEnd": self.statusEnd,
             "isDeepfakeDetectedEnd": self.isDeepfakeDetectedEnd,
             "deepfakeScoreEnd": self.deepfakeScoreEnd,
-            "photoCapturedEnd": self.photoCapturedEnd
+            "photoCapturedEnd": self.photoCapturedEnd,
+            "LinkVideoDeepFakeStart": self.LinkVideoDeepFakeStart,
+            "LinkVideoDeepFakeEnd": self.LinkVideoDeepFakeEnd,
+            "StatusDeepFakeStart": self.StatusDeepFakeStart,
+            "StatusDeepFakeEnd": self.StatusDeepFakeEnd
         }

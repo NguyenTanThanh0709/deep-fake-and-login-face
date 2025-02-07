@@ -17,24 +17,30 @@ from datetime import datetime
 from models.Employee import Employee
 from models.AttendanceLog import AttendanceLog
 from models.Department import Department
-from models.DeepfakeLog import DeepfakeLog
 from tensorflow.keras.models import load_model
 
 
-# Tải mô hình đã lưu
-def load_model(model_file='model.pkl'):
-    with open(model_file, 'rb') as f:
-        model_data = pickle.load(f)
-    return model_data['encoded_faces'], model_data['class_names']
-
-
+# 📌 Tải mô hình Deepfake Detection (h5)
 modeldeepfake = load_model('deepfake_detection_model.h5')
 
-# Lấy mô hình
-encoded_face_train, classNames = load_model()
+# 📌 Tải dữ liệu nhận diện khuôn mặt từ file pkl
+def load_face_model(model_file='model.pkl'):
+    try:
+        with open(model_file, 'rb') as f:
+            model_data = pickle.load(f)
+        print("✅ Dữ liệu khuôn mặt đã tải thành công!")
+        return model_data['encoded_faces'], model_data['class_names']
+    except Exception as e:
+        print(f"❌ Lỗi khi tải dữ liệu khuôn mặt: {e}")
+        return None, None
+
+# Lấy dữ liệu khuôn mặt
+encoded_face_train, classNames = load_face_model()
+
 
 # Hàm trích xuất khung hình từ video
 def extract_frames(video_path):
+    print(video_path)
     cap = cv2.VideoCapture(video_path)
     frames = []
     
@@ -57,6 +63,7 @@ def preprocess_frames(frames):
 
 # Hàm dự đoán xem video có chứa deepfake hay không
 def predict_deepfake(video_path):
+    video_path = video_path.lstrip('/')
     frames = extract_frames(video_path)
     
     if not frames:
@@ -123,7 +130,7 @@ def login_api():
 
     if not email or not password:
         return jsonify({"error": "Email và mật khẩu là bắt buộc"}), 400
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     try:
         with conn1.cursor() as cursor:
             # Kiểm tra email và mật khẩu trong bảng Employees
@@ -172,7 +179,7 @@ def get_attendance_by_id(conn, maNhanVien):
 
 @app.route('/main/<string:user_id>', methods=['GET'])
 def login(user_id):
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     attendance = get_attendance_by_id(conn1, user_id)
     return render_template('index.html', attendance=attendance)  # Tạo một trang web đơn giản để tải ảnh lên
 
@@ -195,7 +202,7 @@ def update_user_password(conn, user_id, hashed_password):
 
 @app.route('/profile/<int:user_id>', methods=['GET', 'POST'])
 def profile(user_id):
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     user = get_employee_by_id(conn1, user_id)
     if user:
         if request.method == 'POST':
@@ -220,6 +227,10 @@ def profile(user_id):
 @app.route('/start')  
 def start():
     return render_template('start.html')  # Tạo một trang web đơn giản để tải ảnh lên  
+
+@app.route('/starttest')  
+def starttest():
+    return render_template('starttest.html')  # Tạo một trang web đơn giản để tải ảnh lên  
 
 @app.route('/end')  
 def end():
@@ -247,13 +258,13 @@ def get_department_by_id(conn):
            
 @app.route('/listnv')
 def listnv():
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     employees = get_nv_by_id(conn1)
     return render_template('listnv.html', employees=employees)  # Tạo một trang web đơn giản để tải ảnh lên
 
 @app.route('/formnv/<int:user_id>', methods=['GET', 'POST'])
 def formnv(user_id):
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     department = get_department_by_id(conn1)
     print(user_id)
 
@@ -335,30 +346,30 @@ def formnv(user_id):
 
 @app.route('/listlogattendace/<int:user_id>', methods=['GET'])
 def listlogattendace(user_id):
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     attendances = get_attendance_by_id(conn1, user_id)
     return render_template('listlogattendace.html', attendances = attendances)  # Tạo một trang web đơn giản để tải ảnh lên
 
 def get_log_deepfake_by_id(conn, maNhanVien):
     with conn.cursor() as cursor:
-        query = "SELECT * from DeepfakeLogs WHERE log_id = %s ORDER BY detection_time DESC"
+        query = "SELECT * from attendancelogs WHERE sdtNhanVien = %s ORDER BY detection_time DESC"
         cursor.execute(query, (maNhanVien,))
         results = cursor.fetchall()  # Fetch all records, even if there's only one
         if results:
-            return [DeepfakeLog.from_dict(result) for result in results]  # Return as a list
+            return [AttendanceLog.from_dict(result) for result in results]  # Return as a list
         else:
             return []
 
 @app.route('/listlogdeepfake/<int:attendance_id>', methods=['GET'])
 def listlogdeepfake(attendance_id):
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     log_deepfake = get_log_deepfake_by_id(conn1, attendance_id)
     print(log_deepfake)
     return render_template('listlogdeepfake.html', logDeepfake = log_deepfake)  # Tạo một trang web đơn giản để tải ảnh lên
 
 @app.route('/api/changeStatus/<int:maNhanVien>', methods=['POST'])
 def change_status(maNhanVien):
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     try:
         with conn1.cursor() as cursor:
             # Cập nhật trạng thái IsActive
@@ -397,7 +408,7 @@ def save_media():
         elif file_type == 'video' and file:
             video_path = os.path.join(app.config['UPLOAD_FOLDER_data'], f"{file_name}.mp4")
             file.save(video_path)
-            file_path = f"/static/images/data/{file_name}.jpg"
+            file_path = f"/static/images/data/{file_name}.mp4"
             return jsonify({"message": "Video saved successfully", "file_path": file_path}), 200
         
         return jsonify({"error": "Invalid file type"}), 400
@@ -406,7 +417,7 @@ def save_media():
 
 def handle_start_again(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart):
     # Kết nối đến cơ sở dữ liệu
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     try:
             with conn1.cursor() as cursor:
                 # Truy vấn kiểm tra bản ghi đã tồn tại
@@ -451,7 +462,7 @@ def save_media(file, file_type, email,sdt):
 
 def handle_start(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart):
     try:
-        conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+        conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
         with conn1.cursor() as cursor:
             # Câu lệnh INSERT
             sql = """
@@ -476,36 +487,26 @@ def handle_start(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, 
         beepy.beep(sound=2)
         conn1.close()
 
-
-def handle_deepfake_log_insert(Sdt,photo_analyzed):
+def handle_start_deepfake(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart):
     try:
-        conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+        conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
         with conn1.cursor() as cursor:
-                            # Truy vấn kiểm tra bản ghi đã tồn tại
-            sql_check = """
-                SELECT `logId` 
-                FROM `AttendanceLogs`
-                WHERE `sdtNhanVien` = %s AND DATE(`timeStart`) = DATE(CURRENT_TIMESTAMP())
+            # Câu lệnh INSERT
+            sql = """
+                INSERT INTO `AttendanceLogs` (
+                    `sdtNhanVien`, 
+                    `timeStart`, 
+                    `StatusDeepFakeStart`, 
+                    `isDeepfakeDetectedStart`, 
+                    `deepfakeScoreStart`, 
+                    `LinkVideoDeepFakeStart`
+                ) VALUES (%s, CURRENT_TIMESTAMP, %s, %s, %s, %s)
             """
-            cursor.execute(sql_check, (Sdt))
-            result = cursor.fetchone()
-            print(result)
-            if result:
-                logId = result['logId']
-                # Câu lệnh INSERT cho DeepfakeLogs
-                sql = """
-                    INSERT INTO `DeepfakeLogs` (
-                        `log_id`, 
-                        `photo_analyzed`
-                    ) VALUES (%s, %s)
-                """
-                # Thực thi câu lệnh
-                cursor.execute(sql, (logId, photo_analyzed))
-                # Lưu thay đổi vào cơ sở dữ liệu
-                conn1.commit()
-                print("Dữ liệu đã được chèn thành công vào bảng DeepfakeLogs.")
-            else:
-                raise Exception("Không tìm thấy logId tương ứng trong bảng AttendanceLogs.")
+            # Thực thi câu lệnh
+            cursor.execute(sql, (Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart))
+            # Lưu thay đổi vào cơ sở dữ liệu
+            conn1.commit()
+            print("Dữ liệu đã được chèn thành công vào bảng AttendanceLogs.")
     except Exception as e:
         print(f"Đã xảy ra lỗi: {e}")
     finally:
@@ -513,9 +514,9 @@ def handle_deepfake_log_insert(Sdt,photo_analyzed):
         beepy.beep(sound=2)
         conn1.close()
 
-def handle_start_again_attendance_deepfake(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart):
+def handle_start_again_attendance_deepfake(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, file_path):
     # Kết nối đến cơ sở dữ liệu
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     try:
             with conn1.cursor() as cursor:
                 # Truy vấn kiểm tra bản ghi đã tồn tại
@@ -533,24 +534,25 @@ def handle_start_again_attendance_deepfake(Sdt, statusStart, isDeepfakeDetectedS
                     sql_update = """
                         UPDATE `AttendanceLogs`
                         SET 
-                            `statusStart` = %s,
+                            `StatusDeepFakeStart` = %s,
                             `isDeepfakeDetectedStart` = %s,
                             `deepfakeScoreStart` = %s,
+                            `LinkVideoDeepFakeStart` = %s
                         WHERE `logId` = %s
                     """
-                    cursor.execute(sql_update, (statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, logId))
+                    cursor.execute(sql_update, (statusStart, isDeepfakeDetectedStart, deepfakeScoreStart,file_path, logId))
                     print(f"Bản ghi logId = {logId} đã được cập nhật.")
                     conn1.commit()
                     conn1.close()
                     beepy.beep(sound=2)
                 else:
-                    raise Exception("Bản ghi không tồn tại")
+                    handle_start_deepfake(Sdt, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, file_path)
     except Exception as e:
             print(f"Đã xảy ra lỗi: {e}")
 
-def handle_End_again_attendance_deepfake(Sdt, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd):
+def handle_End_again_attendance_deepfake(Sdt, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, file_path):
     # Kết nối đến cơ sở dữ liệu
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     try:
             with conn1.cursor() as cursor:
                 # Truy vấn kiểm tra bản ghi đã tồn tại
@@ -568,12 +570,13 @@ def handle_End_again_attendance_deepfake(Sdt, statusEnd, isDeepfakeDetectedEnd, 
                     sql_update = """
                         UPDATE `AttendanceLogs`
                         SET 
-                            `statusEnd` = %s,
+                            `StatusDeepFakeEnd` = %s,
                             `isDeepfakeDetectedEnd` = %s,
                             `deepfakeScoreEnd` = %s,
+                            `LinkVideoDeepFakeEnd` = %s
                         WHERE `logId` = %s
                     """
-                    cursor.execute(sql_update, (statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, logId))
+                    cursor.execute(sql_update, (statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd,file_path, logId))
                     print(f"Bản ghi logId = {logId} đã được cập nhật.")
                     conn1.commit()
                     conn1.close()
@@ -618,9 +621,9 @@ def insert_start_api():
                     sdt_check = "Unknown"  
                     email_check = name_class
                 
-                check = "NOT"
+                check = ""
                 if sdt == sdt_check:
-                    check = "NOT DEEPFAKE"
+                    check = "SUCCESS"
                 else:
                     check = "FAILED"
                     
@@ -639,29 +642,26 @@ def insert_start_api():
     else:
         checkDeepFake, ScoreDeepFake = predict_deepfake(filePath)
         if checkDeepFake == True:
-            handle_start_again_attendance_deepfake(sdt,"FAILED", 1, ScoreDeepFake)
-            handle_deepfake_log_insert(sdt,filePath)
+            handle_start_again_attendance_deepfake(sdt,"FAILED", 1, ScoreDeepFake, filePath)
             response_data = {
             'status': 'FAILED'
             }
             return jsonify(response_data)
         elif checkDeepFake == False:
-            handle_start_again_attendance_deepfake(sdt,"SUCCESS", 0, ScoreDeepFake)
-            handle_deepfake_log_insert(sdt,filePath)
+            handle_start_again_attendance_deepfake(sdt,"SUCCESS", 0, ScoreDeepFake, filePath)
             response_data = {
             'status': 'SUCCESS'
             }
             return jsonify(response_data)            
         else:
-            handle_start_again_attendance_deepfake(sdt,"NOT DEEPFAKE", 0, ScoreDeepFake)
-            handle_deepfake_log_insert(sdt,filePath)
+            handle_start_again_attendance_deepfake(sdt,"NOT DEEPFAKE", 0, ScoreDeepFake, filePath)
             response_data = {
-            'status': 'NOT DEEPFAKE'
+            'status': 'NOT'
             }
             return jsonify(response_data)              
 
 def handle_end(Sdt, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCapturedEnd):
-    conn1 = connect_db('root_t', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
     try:
             with conn1.cursor() as cursor:
                 # Truy vấn kiểm tra bản ghi đã tồn tại
@@ -688,16 +688,7 @@ def handle_end(Sdt, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCap
                     cursor.execute(sql_update, (statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCapturedEnd, logId))
                     print(f"Bản ghi logId = {logId} đã được cập nhật.")
                 else:  # Nếu không, chèn mới
-                    sql_insert = """
-                        INSERT INTO `AttendanceLogs` (
-                            `sdtNhanVien`, `timeStart`, `statusStart`, `isDeepfakeDetectedStart`, `deepfakeScoreStart`, `photoCapturedStart`,
-                            `timeEnd`, `statusEnd`, `isDeepfakeDetectedEnd`, `deepfakeScoreEnd`, `photoCapturedEnd`
-                        ) VALUES (
-                            %s, CURRENT_TIMESTAMP, 'NOT', 0, 0.0, '', CURRENT_TIMESTAMP, %s, %s, %s, %s
-                        )
-                    """
-                    cursor.execute(sql_insert, (Sdt, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCapturedEnd))
-                    print("Bản ghi mới đã được chèn vào bảng AttendanceLogs.")
+                    raise Exception("Bản ghi không tồn tại")
                 # Lưu thay đổi
                 conn1.commit()
     except Exception as e:
@@ -740,7 +731,7 @@ def insert_end_api():
                     sdt_check = "Unknown"  
                     email_check = name_class
                 
-                check = "NOT"
+                check = ""
                 if sdt == sdt_check:
                     check = "SUCCESS"
                 else:
@@ -755,22 +746,19 @@ def insert_end_api():
     else:
         checkDeepFake, ScoreDeepFake = predict_deepfake(filePath)
         if checkDeepFake == True:
-            handle_End_again_attendance_deepfake(sdt,"FAILED", 1, ScoreDeepFake)
-            handle_deepfake_log_insert(sdt,filePath)
+            handle_End_again_attendance_deepfake(sdt,"FAILED", 1, ScoreDeepFake,filePath)
             response_data = {
             'status': 'FAILED'
             }
             return jsonify(response_data)
         elif checkDeepFake == False:
-            handle_End_again_attendance_deepfake(sdt,"SUCCESS", 0, ScoreDeepFake)
-            handle_deepfake_log_insert(sdt,filePath)
+            handle_End_again_attendance_deepfake(sdt,"SUCCESS", 0, ScoreDeepFake,filePath)
             response_data = {
             'status': 'SUCCESS'
             }
             return jsonify(response_data)            
         else:
-            handle_End_again_attendance_deepfake(sdt,"NOT DEEPFAKE", 0, ScoreDeepFake)
-            handle_deepfake_log_insert(sdt,filePath)
+            handle_End_again_attendance_deepfake(sdt,"NOT DEEPFAKE", 0, ScoreDeepFake,filePath)
             response_data = {
             'status': 'NOT DEEPFAKE'
             }

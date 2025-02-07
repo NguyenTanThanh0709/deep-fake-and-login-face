@@ -3,296 +3,323 @@
 {% block title %}Danh Sách Điểm Danh{% endblock %}
 
 {% block content %}
-        <!-- Main Content -->
-        <div class="flex-1">
-            <!-- Main Content Area --> 
-            <div class="container-fluid mx-auto" id="contprofile">
-                <div class="container text-center py-3">
-                    <h1 class="text-2xl mb-3">ĐIỂM DANH ĐẦU GIỜ</h1>
-                    <h1 class="text-2xl mb-3">Chụp Hình</h1>
+<div class="flex-1">
+    <div class="container-fluid mx-auto" id="contprofile">
+        <div class="container text-center py-3">
+            <h1 class="text-2xl mb-3">ĐIỂM DANH ĐẦU GIỜ</h1>
+            <h1 class="text-2xl mb-3">Quay Video</h1>
 
-                    <div class="mb-3">
-                        <button id="startCamera" class="btn btn-primary btn-sm">Mở Camera</button>
-                    </div>
+            <!-- Nút Mở Camera -->
+            <div class="mb-3">
+                <button id="startCamera" class="btn btn-primary btn-sm">Mở Camera</button>
+            </div>
 
-                    <div class="flex flex-row items-start space-x-4 mb-3">
-                        <!-- Video -->
-                        <video id="video" class="w-1/3 h-auto border border-gray-300 rounded" autoplay></video>
-                        
-                        <!-- Canvas -->
-                        <canvas id="canvas" class="w-1/3 h-auto d-none border border-gray-300 rounded"></canvas>
-                        
-                        <!-- Ảnh đã chụp -->
-                        <div id="photoPreviewContainer" class="w-1/3 h-auto d-none flex">
-                            <img id="photoPreview" class="w-1/2 border h-auto border-gray-300 rounded" alt="Ảnh đã chụp">
-                        </div>
-                        <div class="mb-3">
-                            <span id="countdown" class="text-xl font-bold text-red-500"></span>
-                        </div>
-                    </div>
-                    
+            <!-- Khu vực hiển thị camera -->
+            <div class="relative mb-3">
+                <video id="video" class="w-1/3 h-auto border border-gray-300 rounded" autoplay></video>
+                <canvas id="canvas" class="w-1/3 h-auto d-none border border-gray-300 rounded"></canvas>
 
-                    <div>
-                        <button id="capturePhoto" class="btn btn-success btn-sm d-none">Chụp Hình</button>
-                        <button id="recordVideo" class="btn btn-warning btn-sm d-none">Quay Video</button>
-                    </div>
-
-                    <div class="mt-3">
-                        <a id="downloadLink" class="btn btn-info btn-sm d-none" href="#" download>Download</a>
-                    </div>
-
-                    <div class="mt-3">
-                        <a class="btn btn-info btn-sm d-none" id="saveLink_luu" href="#" download>Lưu</a>
-                    </div>
-                    <!-- Button for capturing photo or video -->
-                    <div class="mt-3">
-                        <a class="btn btn-info btn-sm d-none" id="saveLink" href="#" download>Điểm Danh</a>
-                    </div>
+                <!-- Đếm ngược -->
+                <div id="countdown" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-4xl font-bold text-white bg-black bg-opacity-50 px-4 py-2 rounded hidden">
                 </div>
             </div>
-                        <!-- Fixed Refresh Button -->
-    <button id="refreshButton" class="btn btn-danger position-fixed bottom-8 right-8" style="z-index: 1000;">
-        điểm danh xong Refresh để check deepfake
-    </button>
-    
+
+            <!-- Nút quay video -->
+            <div>
+                <button id="recordVideo" class="btn btn-warning btn-sm d-none">Quay Video</button>
+            </div>
+
+<!-- Hiển thị ảnh chụp và video đã quay -->
+<div class="mt-3">
+    <div class="d-flex flex-wrap items-center justify-center gap-4">
+        <!-- Ảnh Chụp -->
+        <div class="text-center">
+            <h3 class="text-lg font-semibold mb-2">Ảnh Chụp</h3>
+            <img id="capturedImage" class="w-48 h-auto border border-gray-300 rounded-lg shadow-md hidden">
         </div>
 
-    
-    <script>
-        var fileName = ""
-        let videoStream;
-        let countdownTimer;
-        const videoElement = document.getElementById('video');
-        const canvasElement = document.getElementById('canvas');
-        const startCameraButton = document.getElementById('startCamera');
-        const capturePhotoButton = document.getElementById('capturePhoto');
-        const recordVideoButton = document.getElementById('recordVideo');
-        const downloadLink = document.getElementById('downloadLink');
-        const countdownElement = document.getElementById('countdown');
-        const saveLink = document.getElementById('saveLink');
-        const saveLink_luu = document.getElementById('saveLink_luu');
-        
-        // Open the camera and display it on the video element
-        startCameraButton.addEventListener('click', async () => {
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                videoElement.srcObject = videoStream;
-                videoElement.onloadedmetadata = () => {
-                    // This ensures that the video metadata is loaded before you try to access its dimensions
-                    capturePhotoButton.classList.remove('d-none');
-                    recordVideoButton.classList.remove('d-none');
-                    startCameraButton.classList.add('d-none');
-                };
-            } catch (err) {
-                console.error('Error accessing camera:', err);
-            }
-        });
-        
-        // Capture a photo
-        capturePhotoButton.addEventListener('click', () => {
-            const context = canvasElement.getContext('2d');
-            canvasElement.width = videoElement.videoWidth;
-            canvasElement.height = videoElement.videoHeight;
-            context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-            const photoData = canvasElement.toDataURL('image/jpeg');
+        <!-- Video Đã Quay -->
+        <div class="text-center">
+            <h3 class="text-lg font-semibold mb-2">Video Đã Quay</h3>
+            <video id="recordedVideo" class="w-48 h-auto border border-gray-300 rounded-lg shadow-md hidden" controls></video>
+        </div>
+    </div>
+</div>
 
-                // Hiển thị ảnh đã chụp
-            const photoPreviewContainer = document.getElementById('photoPreviewContainer');
-            const photoPreview = document.getElementById('photoPreview');
-            photoPreview.src = photoData;
-            photoPreviewContainer.classList.remove('d-none');
-        
-            // Download the captured photo
-            downloadLink.href = photoData;
-            // downloadLink.classList.remove('d-none');
-            downloadLink.textContent = 'Download Photo';
-        
-            // Show the "Lưu Video" button
-            // saveLink.classList.remove('d-none');
-            saveLink_luu.classList.remove('d-none');
-        });
-        
 
-        
- 
-            saveLink.addEventListener('click', () => {
-            const employee = localStorage.getItem('employee');
-            if (employee) {
+            <!-- Nút gửi dữ liệu -->
+            <div class="mt-3">
+                <a id="saveLink" class="btn btn-info btn-sm d-none" href="#">Lưu</a>
+            </div>
+            <div class="mt-3">
+                <a id="saveLink_deep" class="btn btn-info btn-sm d-none" href="#">Điểm Danh</a>
+            </div>
+        </div>
+    </div>
+</div>
 
-                let fileData;
-                let fileBlob;
-                var sdt = JSON.parse(employee).sdt;
-            
-                if (downloadLink.textContent === "Download Photo") {
-                    const photoData = canvasElement.toDataURL('image/jpeg');
-                    const byteString = atob(photoData.split(',')[1]); // Decode base64 data
-                    const ab = new ArrayBuffer(byteString.length);
-                    const ia = new Uint8Array(ab);
-                    for (let i = 0; i < byteString.length; i++) {
-                        ia[i] = byteString.charCodeAt(i);
-                    }
-                    const blob = new Blob([ab], { type: 'image/jpeg' });
-            
-                    const formData = new FormData();
-                    formData.append('image', blob, 'photo.jpg');
-                    formData.append('fileType', 'image');
-                    formData.append('sdt', sdt);fileName
-                    formData.append('filePath', fileName);
-            
-                    // Send the formData to Flask
-                    fetch('/attendance/start', { method: 'POST', body: formData })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.status =='FAILED'){
-                                alert("Điểm danh thất bại")
-                            }
-                            if (data.status == 'SUCCESS'){
-                                alert("Đã Điểm danh");
-                            }
-                            if(data.status == "NOT"){
-                                alert("Hình Bị Lỗi vui lòng chụp lại");
-                            }
-                            if(data.status == "OK"){
-                                alert("Đã Điểm danh");
-                                if(data.message == "NOT DEEPFAKE"){
-                                    alert("Điểm danh thành công! tiếp tục kiểm tra deepfake");
-                                }else{
-                                    alert("Điểm danh thất bại! vui lòng thử lại");
-                                }
-                                window.location.href = "/";
-                            }
-                            console.log('File saved successfully:', data);
-                        })
-                        .catch(error => {
-                            console.error('Error saving file:', error);
-                        });
-            
-                } else {
+<script>
+    let videoStream;
+    var fileNameImage = ""
+    var fileNameVideo = ""
+    const videoElement = document.getElementById('video');
+    const canvasElement = document.getElementById('canvas');
+    const startCameraButton = document.getElementById('startCamera');
+    const recordVideoButton = document.getElementById('recordVideo');
+    const saveLink = document.getElementById('saveLink');
+    const saveLink_deep = document.getElementById('saveLink_deep');
+    const capturedImage = document.getElementById('capturedImage');
+    const recordedVideo = document.getElementById('recordedVideo');
+    const countdownElement = document.getElementById('countdown');
 
-                }
-            }
+    let videoBlob = null; // Lưu video để gửi sau
 
-        });
-
-            saveLink_luu.addEventListener('click', () => {
-                saveLink.classList.remove('d-none');
-                saveLink_luu.classList.add('d-none');
-                // Check if the data is an image or video and send it to the Flask backend
-                let fileData;
-                let fileBlob;
-
-                if (downloadLink.textContent === "Download Photo") {
-                    const photoData = canvasElement.toDataURL('image/jpeg');
-                    const byteString = atob(photoData.split(',')[1]); // Decode base64 data
-                    const ab = new ArrayBuffer(byteString.length);
-                    const ia = new Uint8Array(ab);
-                    for (let i = 0; i < byteString.length; i++) {
-                        ia[i] = byteString.charCodeAt(i);
-                    }
-                    const blob = new Blob([ab], { type: 'image/jpeg' });
-            
-                    const formData = new FormData();
-                    formData.append('file', blob, 'photo.jpg');
-                    formData.append('fileType', 'image');
-                    const employee = localStorage.getItem('employee');
-                    var sdt = JSON.parse(employee).sdt;
-                    formData.append('sdt', sdt);
-            
-                    // Send the formData to Flask
-                    fetch('/save-media-start', { method: 'POST', body: formData })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log('File saved successfully:', data);
-                            fileName = data.file_path;
-                        })
-                        .catch(error => {
-                            console.error('Error saving file:', error);
-                        });
-                } else {
-                    // Directly get the Blob URL and send it to Flask
-                    fileBlob = downloadLink.href;
-                    fetch(fileBlob)
-                        .then(response => response.blob()) // Get the video blob
-                        .then(blob => {
-                            const formData = new FormData();
-                            formData.append('file', blob, 'video.mp4'); // Set the correct file name for video
-                            formData.append('fileType', 'video');
-                            const employee = localStorage.getItem('employee');
-                            var sdt = JSON.parse(employee).sdt;
-                            formData.append('sdt', sdt);
-                    
-                            // Send the file data to the Flask API
-                            fetch('/save-media-start', {
-                                method: 'POST',
-                                body: formData,
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log('File saved successfully:', data);
-                                fileName = data.file_path;
-                            })
-                            .catch(error => {
-                                console.error('Error saving file:', error);
-                            });
-                        });                    
-                }
-            });        
-
-        // Record a video for 5 seconds with countdown
-        recordVideoButton.addEventListener('click', () => {
-            let countdown = 5;  // 5 seconds countdown
-            countdownElement.textContent = `Recording in: ${countdown}s`;
-            countdownTimer = setInterval(() => {
-                countdown -= 1;
-                countdownElement.textContent = `Recording in: ${countdown}s`;
-                if (countdown === 0) {
-                    clearInterval(countdownTimer);
-                    startRecording();
-                }
-            }, 1000); // Countdown every 1 second
-        });
-        
-        function startRecording() {
-            const mediaRecorder = new MediaRecorder(videoStream);
-            const recordedChunks = [];
-        
-            mediaRecorder.ondataavailable = (event) => {
-                recordedChunks.push(event.data);
-            };
-        
-            mediaRecorder.onstop = () => {
-                const videoBlob = new Blob(recordedChunks, { type: 'video/mp4' }); // Save as MP4
-                const videoUrl = URL.createObjectURL(videoBlob);
-
-                const videoPreview = document.createElement('video');
-                videoPreview.src = videoUrl;
-                videoPreview.controls = true; // Thêm điều khiển cho video (play, pause)
-                videoPreview.classList.add('w-1/2', 'border','h-auto', 'border-gray-300', 'rounded'); // Thêm style cho video
-                document.getElementById('photoPreviewContainer').appendChild(videoPreview); // Thêm video vào container
-                photoPreviewContainer.classList.remove('d-none');
-
-                // Download the recorded video
-                downloadLink.href = videoUrl;
-                // downloadLink.classList.remove('d-none');
-                downloadLink.textContent = 'Download Video';
-        
-                // Show the "Lưu Video" button
-                saveLink.classList.remove('d-none');
-            };
-        
-            mediaRecorder.start();
-            setTimeout(() => {
-                mediaRecorder.stop();
-            }, 5000); // Stop recording after 5 seconds
+    startCameraButton.addEventListener('click', async () => {
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoElement.srcObject = videoStream;
+            recordVideoButton.classList.remove('d-none');
+            startCameraButton.classList.add('d-none');
+        } catch (err) {
+            console.error('Lỗi khi mở camera:', err);
         }
-        
-        // Refresh the page
-        document.getElementById('refreshButton').addEventListener('click', () => {
-            window.location.reload();
+    });
+
+    recordVideoButton.addEventListener('click', () => {
+        startCountdown(3, () => startRecording(7));
+    });
+
+    function startCountdown(seconds, callback) {
+        countdownElement.classList.remove('hidden');
+        let remainingTime = seconds;
+        countdownElement.innerText = remainingTime;
+
+        const interval = setInterval(() => {
+            remainingTime--;
+            countdownElement.innerText = remainingTime;
+            if (remainingTime === 0) {
+                clearInterval(interval);
+                countdownElement.classList.add('hidden');
+                callback();
+            }
+        }, 1000);
+    }
+
+    function startRecording(duration) {
+        const mediaRecorder = new MediaRecorder(videoStream);
+        const recordedChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+            recordedChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            videoBlob = new Blob(recordedChunks, { type: 'video/mp4' });
+            const videoUrl = URL.createObjectURL(videoBlob);
+
+            // Hiển thị video đã quay
+            recordedVideo.src = videoUrl;
+            recordedVideo.classList.remove('hidden');
+
+            captureImageFromVideo(videoElement);
+
+            // Hiển thị nút "Điểm Danh" sau khi quay xong
+            saveLink.classList.remove('d-none');
+        };
+
+        mediaRecorder.start();
+
+        // Hiển thị đếm ngược trong lúc quay video
+        startRecordingCountdown(duration, () => {
+            mediaRecorder.stop();
         });
 
-            </script>
-        
-            <!-- Bootstrap JS -->
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        // Chụp ảnh ở giữa video
+        setTimeout(() => {
+            captureImageFromVideo(videoElement);
+        }, (duration / 2) * 1000);
+    }
+
+    function startRecordingCountdown(seconds, callback) {
+        countdownElement.classList.remove('hidden');
+        let remainingTime = seconds;
+        countdownElement.innerText = `Đang quay: ${remainingTime}s`;
+
+        const interval = setInterval(() => {
+            remainingTime--;
+            countdownElement.innerText = `Đang quay: ${remainingTime}s`;
+            if (remainingTime === 0) {
+                clearInterval(interval);
+                countdownElement.classList.add('hidden');
+                callback();
+            }
+        }, 1000);
+    }
+
+    function captureImageFromVideo(video) {
+        const context = canvasElement.getContext('2d');
+        canvasElement.width = video.videoWidth;
+        canvasElement.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+
+        // Hiển thị ảnh chụp
+        capturedImage.src = canvasElement.toDataURL('image/jpeg');
+        capturedImage.classList.remove('hidden');
+    }
+
+    saveLink.addEventListener('click', async () => {
+        saveLink.innerText = "Đang gửi...";
+        saveLink.disabled = true; // Tránh nhấn nhiều lần
+
+        await uploadData(videoBlob);
+        await uploadImage(capturedImage.src);
+
+        saveLink.innerText = "Lưu Thành Công!";
+        saveLink.classList.add('btn-success');
+        saveLink_deep.classList.remove('d-none');
+    });
+
+    saveLink_deep.addEventListener('click', async () => {
+        saveLink.innerText = "Đang gửi...";
+        saveLink.disabled = true; // Tránh nhấn nhiều lần
+
+        await uploadImage1(capturedImage.src);
+        await uploadData1(videoBlob);
+
+        saveLink.innerText = "Điểm Danh Thành Công!";
+        saveLink.classList.add('btn-success');
+    });
+
+    async function uploadData(videoBlob) {
+        if (!videoBlob) return;
+        const formData = new FormData();
+        formData.append('file', videoBlob, 'video.mp4');
+        formData.append('fileType', 'video');
+        const employee = localStorage.getItem('employee');
+        var sdt = JSON.parse(employee).sdt;
+        formData.append('sdt', sdt);
+
+        // Send the file data to the Flask API
+        fetch('/save-media-start', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('File saved successfully:', data);
+            fileNameVideo = data.file_path;
+        })
+        .catch(error => {
+            console.error('Error saving file:', error);
+        });
+    }
+
+    async function uploadImage(imageData) {
+        const byteString = atob(imageData.split(',')[1]);
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], { type: 'image/jpeg' });
+
+        const formData = new FormData();
+        // formData.append('file', blob, 'snapshot.jpg');
+        formData.append('file', blob, 'photo.jpg');
+        formData.append('fileType', 'image');
+        const employee = localStorage.getItem('employee');
+        var sdt = JSON.parse(employee).sdt;
+        formData.append('sdt', sdt);
+
+        // Send the formData to Flask
+        fetch('/save-media-start', { method: 'POST', body: formData })
+            .then(response => response.json())
+            .then(data => {
+                console.log('File saved successfully:', data);
+                fileNameImage = data.file_path;
+            })
+            .catch(error => {
+                console.error('Error saving file:', error);
+            });
+    }
+
+
+    async function uploadData1(videoBlob) {
+        if (!videoBlob) return;
+        const formData = new FormData();
+        formData.append('file', videoBlob, 'video.mp4');
+        formData.append('fileType', 'video');
+        const employee = localStorage.getItem('employee');
+        var sdt = JSON.parse(employee).sdt;
+        formData.append('sdt', sdt);
+        formData.append('filePath', fileNameVideo);
+        console.log(formData);
+        fetch('/attendance/start', { method: 'POST', body: formData })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status =='FAILED'){
+                    alert("DeepFake thất bại")
+                }
+                if (data.status == 'SUCCESS'){
+                    alert("Đã DeepFake");
+                }
+                if(data.status == "NOT"){
+                    alert("DeepFake không được");
+                }
+                console.log('File saved successfully:', data);
+            })
+            .catch(error => {
+                console.error('Error saving file:', error);
+            });
+
+    }
+
+    async function uploadImage1(imageData) {
+        const byteString = atob(imageData.split(',')[1]);
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], { type: 'image/jpeg' });
+
+        const formData1 = new FormData();
+        // formData.append('file', blob, 'snapshot.jpg');
+        formData1.append('image', blob, 'photo.jpg');
+        formData1.append('fileType', 'image');
+        const employee = localStorage.getItem('employee');
+        var sdt = JSON.parse(employee).sdt;
+        formData1.append('sdt', sdt);
+        formData1.append('filePath', fileNameImage);
+
+
+        console.log("Sending FormData:", formData1);
+        for (var pair of formData1.entries()) {
+            console.log(pair[0]+ ', ' + pair[1]);
+        }
+
+        fetch('/attendance/start', { method: 'POST', body: formData1 })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status =='FAILED'){
+                    alert("Điểm danh thất bại")
+                }
+                if (data.status == 'SUCCESS'){
+                    alert("Đã Điểm danh");
+                }
+                if(data.status == "NOT"){
+                    alert("Hình Bị Lỗi vui lòng chụp lại");
+                }
+                console.log('File saved successfully:', data);
+            })
+            .catch(error => {
+                console.error('Error saving file:', error);
+            });
+    }
+
+
+
+
+</script>
+
 {% endblock %}

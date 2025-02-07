@@ -52,7 +52,7 @@
                 <a id="saveLink" class="btn btn-info btn-sm d-none" href="#">Lưu</a>
             </div>
             <div class="mt-3">
-                <a id="saveLink_deep" class="btn btn-info btn-sm d-none" href="#">Báo cáo</a>
+                <a id="saveLink_deep" class="btn btn-info btn-sm d-none" href="#">Điểm Danh</a>
             </div>
         </div>
     </div>
@@ -254,7 +254,7 @@
         formData.append('sdt', sdt);
         formData.append('filePath', fileNameVideo);
         console.log(formData);
-        fetch('/attendance/end', { method: 'POST', body: formData })
+        fetch('/attendance/start', { method: 'POST', body: formData })
             .then(response => response.json())
             .then(data => {
                 if (data.status =='FAILED'){
@@ -302,10 +302,10 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status =='FAILED'){
-                    alert("Báo cáo thất bại")
+                    alert("Điểm danh thất bại")
                 }
                 if (data.status == 'SUCCESS'){
-                    alert("Đã Báo cáo");
+                    alert("Đã Điểm danh");
                 }
                 if(data.status == "NOT"){
                     alert("Hình Bị Lỗi vui lòng chụp lại");

@@ -10,21 +10,32 @@
     <table class="table table-striped table-bordered">
         <thead>
             <tr>
-                <th class="px-4 py-2">Mã Logs</th>
                 <th class="px-4 py-2">Mã Logs Điểm Danh</th>
-                <th class="px-4 py-2">Thời Gian Phát Hiện</th>
-                <th class="px-4 py-2">Ảnh Phân Tích</th> <!-- Analyzed Photo Column -->
+                <th class="px-4 py-2">Thời Gian Phát Hiện Điểm danh</th>
+                <th class="px-4 py-2">Trạng thái start</th>
+                <th class="px-4 py-2">Ảnh Phân Tích Điểm danh</th> <!-- Analyzed Photo Column -->
+                <th class="px-4 py-2">Thời Gian Phát Hiện Báo cáo</th>
+                <th class="px-4 py-2">Trạng thái end</th>
+                <th class="px-4 py-2">Ảnh Phân Tích Báo cáo</th> <!-- Analyzed Photo Column -->
             </tr>
         </thead>
         <tbody id="deepfakeLogs">
             {% for log in logDeepfake %}
             <tr>
-                <td class="px-4 py-2">{{ log.deepfake_log_id }}</td>
-                <td class="px-4 py-2">{{ log.log_id }}</td>
-                <td class="px-4 py-2">{{ log.prediction }}</td>
+                <td class="px-4 py-2">{{ log.logId }}</td>
+                <td class="px-4 py-2">{{ log.timeStart }}</td>
+                <td class="px-4 py-2">{{ log.StatusDeepFakeStart }}</td>
                 <td class="px-4 py-2">
                     <video width="200" controls>
-                        <source src="{{ log.photo_analyzed }}" type="video/mp4">
+                        <source src="{{ log.LinkVideoDeepFakeStart }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </td>
+                <td class="px-4 py-2">{{ log.timeEnd }}</td>
+                <td class="px-4 py-2">{{ log.StatusDeepFakeEnd }}</td>
+                <td class="px-4 py-2">
+                    <video width="200" controls>
+                        <source src="{{ log.LinkVideoDeepFakeEnd }}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
                 </td>
