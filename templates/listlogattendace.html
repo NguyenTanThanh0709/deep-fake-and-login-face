@@ -21,10 +21,14 @@
                 <th class="px-4 py-2">Mã</th>
                 <th class="px-4 py-2">Điểm danh đầu giờ</th>
                 <th class="px-4 py-2">Trạng Thái đầu giờ</th>
+                <th class="px-4 py-2">Kinh độ điểm danh</th>
+                <th class="px-4 py-2">Vĩ độ điểm danh</th>
                 <th class="px-4 py-2">Deepfake Phát Hiện</th>
                 <th class="px-4 py-2">Ảnh đầu giờ</th> <!-- Photo Start Column -->
                 <th class="px-4 py-2">Thời Gian báo cáo</th>
                 <th class="px-4 py-2">Trạng Thái báo cáo</th>
+                <th class="px-4 py-2">Kinh độ báo cáo</th>
+                <th class="px-4 py-2">Vĩ độ báo cáo</th>
                 <th class="px-4 py-2">Deepfake Phát Hiện</th>
                 <th class="px-4 py-2">Ảnh báo cáo</th> <!-- Photo End Column -->
                 <th class="px-4 py-2">Hành Động</th>
@@ -36,12 +40,16 @@
                 <td class="px-4 py-2">{{ attendance.logId }}</td>
                 <td class="px-4 py-2">{{ attendance.timeStart }}</td>
                 <td class="px-4 py-2">{{ attendance.statusStart }}</td>
+                <td class="px-4 py-2">{{ attendance.latStart }}</td>
+                <td class="px-4 py-2">{{ attendance.lonStart }}</td>
                 <td class="px-4 py-2">{{ attendance.isDeepfakeDetectedStart }}</td>
                 <td class="px-4 py-2">
                     <img src="{{ attendance.photoCapturedStart }}" alt="Start Photo" style="width:100px; height:auto;">
                 </td>
                 <td class="px-4 py-2">{{ attendance.timeEnd }}</td>
                 <td class="px-4 py-2">{{ attendance.statusEnd }}</td>
+                <td class="px-4 py-2">{{ attendance.latEnd }}</td>
+                <td class="px-4 py-2">{{ attendance.lonEnd }}</td>
                 <td class="px-4 py-2">{{ attendance.isDeepfakeDetectedEnd }}</td>
                 <td class="px-4 py-2">
                     <img src="{{ attendance.photoCapturedEnd }}" alt="End Photo" style="width:100px; height:auto;">

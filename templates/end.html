@@ -179,13 +179,32 @@
         saveLink_deep.classList.remove('d-none');
     });
 
+
+    async function loadLocation() {
+        var sdt = JSON.parse(employee).sdt;
+        let url = new URL('/check_location/end', window.location.origin);
+        url.searchParams.append('sdt', sdt);
+        url.searchParams.append('id', 1);
+        url.searchParams.append('lat', latitude);
+        url.searchParams.append('lon', longitude);
+        let response = await fetch(url);
+        let data = await response.json();
+        if (data.match === true) {
+            alert("Đúng Vị Trị");
+        } else if (data.match === false) {
+            alert("Sai Vị Trí điểm danh");
+        } else {
+            alert("Có lỗi lấy thông tin vị trí");
+        }
+    }
+
     saveLink_deep.addEventListener('click', async () => {
         saveLink.innerText = "Đang gửi...";
         saveLink.disabled = true; // Tránh nhấn nhiều lần
 
         await uploadImage1(capturedImage.src);
         await uploadData1(videoBlob);
-
+        await loadLocation();
         saveLink.innerText = "Điểm Danh Thành Công!";
         saveLink.classList.add('btn-success');
     });
@@ -298,7 +317,7 @@
             console.log(pair[0]+ ', ' + pair[1]);
         }
 
-        fetch('/attendance/start', { method: 'POST', body: formData1 })
+        fetch('/attendance/end', { method: 'POST', body: formData1 })
             .then(response => response.json())
             .then(data => {
                 if (data.status =='FAILED'){
@@ -318,7 +337,46 @@
     }
 
 
+    function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(updateLocation, showError);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
 
+        function updateLocation(position) {
+            const latitude1 = position.coords.latitude;
+            const longitude1 = position.coords.longitude;
+            
+            document.getElementById("company-latitude").textContent = latitude1;
+            document.getElementById("company-longitude").textContent = longitude1;
+            
+            document.getElementById("company-map").src = `https://www.google.com/maps?q=${latitude1},${longitude1}&output=embed`;
+
+            latitude = latitude1;
+            longitude = longitude1;
+
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("User denied the request for Geolocation.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("The request to get user location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("An unknown error occurred.");
+                    break;
+            }
+        }
+
+        window.onload = getLocation;
 
 </script>
 

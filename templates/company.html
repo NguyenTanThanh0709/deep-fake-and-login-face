@@ -1,0 +1,96 @@
+{% extends 'layoutadmin.html' %}
+
+{% block title %}Thông tin công ty{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-r from-blue-100 to-purple-200 p-5 mt-12">
+    <div class="max-w-3xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden p-6 border border-gray-200">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4 border-b pb-2">Company Details</h2>
+
+        <div class="grid grid-cols-2 gap-6 text-gray-700">
+            <div class="col-span-2 md:col-span-1">
+                <p class="font-semibold">Name:</p>
+                <p class="text-lg text-blue-600">{{ company.name }}</p>
+            </div>
+            <div class="col-span-2 md:col-span-1">
+                <p class="font-semibold">Email:</p>
+                <p class="text-lg text-blue-600">{{ company.email }}</p>
+            </div>
+            <div class="col-span-2 md:col-span-1">
+                <p class="font-semibold">Phone:</p>
+                <p class="text-lg text-blue-600">{{ company.phone }}</p>
+            </div>
+            <div class="col-span-2 md:col-span-1">
+                <p class="font-semibold">Address:</p>
+                <p class="text-lg text-blue-600">{{ company.address }}</p>
+            </div>
+            <div class="col-span-2 md:col-span-1">
+                <p class="font-semibold">Latitude:</p>
+                <p class="text-lg text-blue-600">{{ company.latitude }}</p>
+                <p class="text-lg text-blue-600" id="company-latitude">Loading...</p>
+            </div>
+            <div class="col-span-2 md:col-span-1">
+                <p class="font-semibold">Longitude:</p>
+                <p class="text-lg text-blue-600">{{ company.longitude }}</p>
+                <p class="text-lg text-blue-600" id="company-longitude">Loading...</p>
+            </div>
+            <div class="col-span-2">
+                <p class="font-semibold">Location:</p>
+                <iframe id="company-map" 
+                    class="w-full h-60 rounded-lg border border-gray-300 shadow-sm" 
+                    src="https://www.google.com/maps?q={{ company.latitude }},{{ company.longitude }}&output=embed" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+
+        <div class="mt-6 bg-gray-100 p-4 rounded-lg shadow-sm text-gray-700 text-sm flex justify-between">
+            <div>
+                <p><span class="font-semibold text-gray-800">Ngày tạo công ty:</span> <span class="text-blue-600">{{ company.created_at }}</span></p>
+            </div>
+            <div>
+                <p><span class="font-semibold text-gray-800">Ngày cập nhật mới nhất:</span> <span class="text-blue-600">{{ company.updated_at }}</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(updateLocation, showError);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function updateLocation(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            
+            document.getElementById("company-latitude").textContent = latitude;
+            document.getElementById("company-longitude").textContent = longitude;
+            
+            document.getElementById("company-map").src = `https://www.google.com/maps?q=${latitude},${longitude}&output=embed`;
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("User denied the request for Geolocation.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("The request to get user location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("An unknown error occurred.");
+                    break;
+            }
+        }
+
+        window.onload = getLocation;
+    </script>
+</div>
+{% endblock %}

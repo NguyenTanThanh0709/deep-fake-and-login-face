@@ -1,7 +1,7 @@
 class AttendanceLog:
     def __init__(self, logId, sdtNhanVien, timeStart, statusStart, isDeepfakeDetectedStart, deepfakeScoreStart, photoCapturedStart,
                  timeEnd, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCapturedEnd, LinkVideoDeepFakeStart, LinkVideoDeepFakeEnd,
-                 StatusDeepFakeStart, StatusDeepFakeEnd):
+                 StatusDeepFakeStart, StatusDeepFakeEnd,latStart,lonStart,latEnd,lonEnd):
         self.logId = logId
         self.sdtNhanVien = sdtNhanVien
         self.timeStart = timeStart
@@ -18,6 +18,10 @@ class AttendanceLog:
         self.LinkVideoDeepFakeEnd = LinkVideoDeepFakeEnd
         self.StatusDeepFakeStart = StatusDeepFakeStart
         self.StatusDeepFakeEnd = StatusDeepFakeEnd
+        self.latStart = latStart
+        self.lonStart = lonStart
+        self.latEnd = latEnd
+        self.lonEnd = lonEnd
         
 
     @staticmethod
@@ -38,7 +42,11 @@ class AttendanceLog:
             LinkVideoDeepFakeStart=data.get('LinkVideoDeepFakeStart'),
             LinkVideoDeepFakeEnd=data.get('LinkVideoDeepFakeEnd'),
             StatusDeepFakeStart=data.get('StatusDeepFakeStart'),
-            StatusDeepFakeEnd=data.get('StatusDeepFakeEnd')
+            StatusDeepFakeEnd=data.get('StatusDeepFakeEnd'),
+            latStart=data.get('latStart'),
+            lonStart=data.get('lonStart'),
+            latEnd=data.get('latEnd'),
+            lonEnd=data.get('lonEnd')
         )
 
     def to_dict(self):
@@ -58,5 +66,9 @@ class AttendanceLog:
             "LinkVideoDeepFakeStart": self.LinkVideoDeepFakeStart,
             "LinkVideoDeepFakeEnd": self.LinkVideoDeepFakeEnd,
             "StatusDeepFakeStart": self.StatusDeepFakeStart,
-            "StatusDeepFakeEnd": self.StatusDeepFakeEnd
+            "StatusDeepFakeEnd": self.StatusDeepFakeEnd,
+            "latStart": self.latStart,
+            "lonStart": self.lonStart,
+            "latEnd": self.latEnd,
+            "lonEnd": self.lonEnd
         }

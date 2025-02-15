@@ -17,6 +17,7 @@ from datetime import datetime
 from models.Employee import Employee
 from models.AttendanceLog import AttendanceLog
 from models.Department import Department
+from models.Company import Company
 from tensorflow.keras.models import load_model
 
 
@@ -232,6 +233,26 @@ def start():
 def starttest():
     return render_template('starttest.html')  # Tạo một trang web đơn giản để tải ảnh lên  
 
+# Lấy thông tin nhân viên từ cơ sở dữ liệu
+def get_compay_by_sdt(conn, maNhanVien):
+    with conn.cursor() as cursor:
+        query = "SELECT * from company WHERE sdtAdmin = %s"
+        cursor.execute(query, (maNhanVien,))
+        result = cursor.fetchone()
+        if result:
+            return Company.from_dict(result)
+        else:
+            return None
+
+@app.route('/companypage')  
+def companypage():
+    sdt = request.args.get('sdt')
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    department = get_compay_by_sdt(conn1,sdt)
+    return render_template('company.html', company=department)
+
+
+
 @app.route('/end')  
 def end():
     return render_template('end.html')  # Tạo một trang web đơn giản để tải ảnh lên  
@@ -352,7 +373,7 @@ def listlogattendace(user_id):
 
 def get_log_deepfake_by_id(conn, maNhanVien):
     with conn.cursor() as cursor:
-        query = "SELECT * from attendancelogs WHERE sdtNhanVien = %s ORDER BY detection_time DESC"
+        query = "SELECT * from attendancelogs WHERE sdtNhanVien = %s ORDER BY timeStart DESC"
         cursor.execute(query, (maNhanVien,))
         results = cursor.fetchall()  # Fetch all records, even if there's only one
         if results:
@@ -668,7 +689,7 @@ def handle_end(Sdt, statusEnd, isDeepfakeDetectedEnd, deepfakeScoreEnd, photoCap
                 sql_check = """
                     SELECT `logId` 
                     FROM `AttendanceLogs`
-                    WHERE WHERE `sdtNhanVien` = %s AND DATE(`timeStart`) = DATE(CURRENT_TIMESTAMP())
+                    WHERE `sdtNhanVien` = %s AND DATE(`timeStart`) = DATE(CURRENT_TIMESTAMP())
                 """
                 cursor.execute(sql_check, (Sdt))
                 result = cursor.fetchone()
@@ -768,6 +789,146 @@ def insert_end_api():
         'status': 'NOT'
     }
     return  jsonify(response_data)
+
+
+@app.route('/check_location/start', methods=['GET'])
+def check_location():
+    company_id = request.args.get('id', type=int)
+    lat = request.args.get('lat', type=float)
+    lon = request.args.get('lon', type=float)
+    sdt = request.args.get('sdt', type=float)
+    company_id = 1
+
+
+    if company_id is None or lat is None or lon is None:
+        return jsonify({"error": "Missing parameters"}), 400
+
+    conn = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT latitude, longitude FROM company WHERE id = %s", (company_id,))
+    company = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if not company:
+        return jsonify({"error": "Company not found"}), 404
+
+    company_lat = company['latitude']
+    company_lon = company['longitude']
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    # So sánh tọa độ (có thể thêm khoảng cách sai số nếu cần)
+    if compare_lat_lon(lat, lon, company_lat, company_lon):
+        updateStatusStart(conn1, "SUCCESS", sdt,lat,lon)
+        return jsonify({"match": True})
+    else:
+        updateStatusStart(conn1, "FAILED", sdt,lat,lon)
+        return jsonify({"match": False})
+
+def compare_lat_lon(lat1, lon1, lat2, lon2):
+    return round(lat1, 1) == round(lat2, 1) and round(lon1, 1) == round(lon2, 1)
+
+
+@app.route('/check_location/end', methods=['GET'])
+def check_locationend():
+    company_id = request.args.get('id', type=int)
+    lat = request.args.get('lat', type=float)
+    lon = request.args.get('lon', type=float)
+    sdt = request.args.get('sdt', type=float)
+    company_id = 1
+
+
+    if company_id is None or lat is None or lon is None:
+        return jsonify({"error": "Missing parameters"}), 400
+
+    conn = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT latitude, longitude FROM company WHERE id = %s", (company_id,))
+    company = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if not company:
+        return jsonify({"error": "Company not found"}), 404
+
+    company_lat = company['latitude']
+    company_lon = company['longitude']
+    conn1 = connect_db('pass', 'pass', 'AttendanceSystem', 'localhost', 3306)
+    # So sánh tọa độ (có thể thêm khoảng cách sai số nếu cần)
+    if compare_lat_lon(lat, lon, company_lat, company_lon):
+        updateStatusEnd(conn1, "SUCCESS", sdt,lat,lon)
+        return jsonify({"match": True})
+    else:
+        updateStatusEnd(conn1, "FAILED", sdt,lat,lon)
+        return jsonify({"match": False})
+
+def compare_lat_lon(lat1, lon1, lat2, lon2):
+    return round(lat1, 1) == round(lat2, 1) and round(lon1, 1) == round(lon2, 1)
+
+def updateStatusStart(conn1, status, Sdt,lat,lon):
+    try:
+            with conn1.cursor() as cursor:
+                # Truy vấn kiểm tra bản ghi đã tồn tại
+                sql_check = """
+                    SELECT `logId` 
+                    FROM `AttendanceLogs`
+                    WHERE `sdtNhanVien` = %s AND DATE(`timeStart`) = DATE(CURRENT_TIMESTAMP())
+                """
+                cursor.execute(sql_check, (Sdt))
+                result = cursor.fetchone()
+                print(result)
+
+                if result:  # Nếu bản ghi tồn tại, cập nhật
+                    logId = result['logId']
+                    sql_update = """
+                        UPDATE `AttendanceLogs`
+                        SET 
+                            `statusStart` = %s,
+                            `latStart` = %s,
+                            `lonStart` = %s
+                        WHERE `logId` = %s
+                    """
+                    cursor.execute(sql_update, (status,lat,lon, logId))
+                    print(f"Bản ghi logId = {logId} đã được cập nhật.")
+                    conn1.commit()
+                    conn1.close()
+                    beepy.beep(sound=2)
+    except Exception as e:
+            print(f"Đã xảy ra lỗi: {e}")    
+
+def updateStatusEnd(conn1, status, Sdt,lat,lon):
+    try:
+            with conn1.cursor() as cursor:
+                # Truy vấn kiểm tra bản ghi đã tồn tại
+                sql_check = """
+                    SELECT `logId` 
+                    FROM `AttendanceLogs`
+                    WHERE `sdtNhanVien` = %s AND DATE(`timeStart`) = DATE(CURRENT_TIMESTAMP())
+                """
+                cursor.execute(sql_check, (Sdt))
+                result = cursor.fetchone()
+                print(result)
+
+                if result:  # Nếu bản ghi tồn tại, cập nhật
+                    logId = result['logId']
+                    sql_update = """
+                        UPDATE `AttendanceLogs`
+                        SET 
+                            `statusEnd` = %s,
+                            `latEnd` = %s,
+                            `lonEnd` = %s
+                        WHERE `logId` = %s
+                    """
+                    cursor.execute(sql_update, (status,lat,lon, logId))
+                    print(f"Bản ghi logId = {logId} đã được cập nhật.")
+                    conn1.commit()
+                    conn1.close()
+                    beepy.beep(sound=2)
+    except Exception as e:
+            print(f"Đã xảy ra lỗi: {e}")  
 
 if __name__ == '__main__':
     app.run(debug=True)

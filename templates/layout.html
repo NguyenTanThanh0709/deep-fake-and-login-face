@@ -48,6 +48,11 @@
                     </a>
                 </li>
                 <li class="mb-3">
+                    <a href="#" id="company-page" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out">
+                        <i class="bi bi-house-door-fill mr-2"></i>Thông tin công ty
+                    </a>
+                </li>
+                <li class="mb-3">
                     <a href="#" class="text-white text-decoration-none d-block py-2 px-3 rounded-lg hover:bg-blue-700 bg-blue-900 transition duration-300 ease-in-out" id="logout">
                         <i class="bi bi-house-door-fill mr-2"></i>Đăng xuất
                     </a>
@@ -105,6 +110,29 @@
                 if (employee.role === 'admin') {
                     // Chuyển hướng đến trang quản lý
                     window.location.href = '/listnv';
+                } else {
+                    // Thông báo lỗi
+                    alert('Bạn không có quyền truy cập trang quản lý!');
+                }
+            } else {
+                // Nếu không tìm thấy dữ liệu, cảnh báo người dùng
+                alert('Không tìm thấy thông tin người dùng! Vui lòng đăng nhập lại.');
+            }
+        });
+
+        document.getElementById('company-page').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Lấy thông tin từ localStorage
+            var employeeData = localStorage.getItem('employee');
+            
+            if (employeeData) {
+                var employee = JSON.parse(employeeData);
+                
+                // Kiểm tra vai trò của người dùng
+                if (employee.role === 'admin') {
+                    // Chuyển hướng đến trang quản lý
+                    window.location.href = '/companypage?sdt=' + '0344832983';
                 } else {
                     // Thông báo lỗi
                     alert('Bạn không có quyền truy cập trang quản lý!');
